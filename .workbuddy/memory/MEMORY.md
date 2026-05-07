@@ -35,10 +35,14 @@
 - Requester 新建工单表单 ✅
 - Email Intake Webhook（`/api/email/intake`）✅
 - Agent Dashboard（Recharts + 实时用户信息）✅
+- **Requester Portal 完整交付** ✅
+  - `/app/tickets` 我的工单列表（真实 Supabase 查询 + 筛选 + 搜索 + 排序）
+  - `/app/tickets/[id]` 工单详情（对话流 + 回复表单 + 元数据侧栏）
+  - `/app/profile` 个人设置（编辑昵称 + 登出）
+  - AppShell 动态用户信息 + 退出登录
 
 ### 待完成
 - Resend 邮件接入（需配置域名 + webhook URL）
-- Requester 我的工单列表
 - Admin Console 全套 CRUD
 - Vercel 部署
 
