@@ -1,26 +1,164 @@
 @import "tailwindcss";
 
+/* ============================================================
+   QueueDesk — Design System Tokens
+   ============================================================
+   Tailwind v4: design tokens are defined via @theme inline.
+   These tokens are available as utility classes:
+     bg-(<name>)  → e.g. bg-surface-1
+     text-(<name>) → e.g. text-ink
+     rounded-(<name>) → e.g. rounded-card
+   ============================================================ */
+
+@theme inline {
+  /* ── Brand (Blue) ─────────────────────────────────────── */
+  --color-brand: #2563eb;        /* blue-600 */
+  --color-brand-light: #3b82f6;  /* blue-500 */
+  --color-brand-dark: #1d4ed8;   /* blue-700 */
+
+  /* ── Surfaces (light mode / dark mode) ────────────────── */
+  --color-surface-1: #ffffff;
+  --color-surface-2: #f8fafc;   /* slate-50 */
+  --color-surface-3: #f1f5f9;   /* slate-100 */
+
+  --color-surface-1-dark: #0f172a;  /* slate-900 */
+  --color-surface-2-dark: #1e293b;  /* slate-800 */
+  --color-surface-3-dark: #334155;  /* slate-700 */
+
+  /* ── Ink (text) ──────────────────────────────────────── */
+  --color-ink: #0f172a;          /* slate-900 */
+  --color-ink-secondary: #475569; /* slate-600 */
+  --color-ink-muted: #94a3b8;   /* slate-400 */
+
+  --color-ink-dark: #f1f5f9;     /* slate-100 */
+  --color-ink-secondary-dark: #94a3b8; /* slate-400 */
+  --color-ink-muted-dark: #475569;   /* slate-600 */
+
+  /* ── Borders ──────────────────────────────────────────── */
+  --color-border: #e2e8f0;       /* slate-200 */
+  --color-border-dark: #1e293b;   /* slate-800 */
+
+  /* ── Status colors (mapped to our status badges) ─────── */
+  --color-status-open: #dbeafe;    /* blue-50 */
+  --color-status-open-text: #1d4ed8;
+  --color-status-in-progress: #ede9fe; /* violet-50 */
+  --color-status-in-progress-text: #6d28d9;
+  --color-status-resolved: #dcfce7; /* green-50 */
+  --color-status-resolved-text: #15803d;
+  --color-status-closed: #f1f5f9; /* slate-100 */
+  --color-status-closed-text: #475569;
+
+  /* ── Priority colors ───────────────────────────────────── */
+  --color-priority-urgent: #fecaca; /* red-200 */
+  --color-priority-high: #fef3c7;   /* amber-200 */
+  --color-priority-normal: #dbeafe;  /* blue-200 */
+  --color-priority-low: #f1f5f9;    /* slate-100 */
+
+  /* ── Semantic ─────────────────────────────────────────── */
+  --color-danger: #dc2626;        /* red-600 */
+  --color-danger-light: #fef2f2; /* red-50 */
+  --color-success: #16a34a;       /* green-600 */
+  --color-success-light: #f0fdf4; /* green-50 */
+  --color-warning: #d97706;       /* amber-600 */
+  --color-warning-light: #fffbeb; /* amber-50 */
+
+  /* ── Shadows ───────────────────────────────────────────── */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+  --shadow-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* ── Radius ────────────────────────────────────────────── */
+  --radius-card: 1rem;     /* 16px — rounded-2xl */
+  --radius-button: 0.75rem; /* 12px — rounded-xl */
+  --radius-input: 0.75rem;  /* 12px — rounded-xl */
+  --radius-badge: 0.5rem;  /* 8px  — rounded-lg */
+  --radius-full: 9999px;
+
+  /* ── Sidebar width ─────────────────────────────────────── */
+  --sidebar-width: 240px;
+}
+
+/* ============================================================
+   Dark mode overrides (class-based)
+   Tailwind v4 uses [data-theme="dark"] or .dark on <html>
+   ============================================================ */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --surface: var(--color-surface-1);
+  --surface-alt: var(--color-surface-2);
+  --border: var(--color-border);
+  --text: var(--color-ink);
+  --text-secondary: var(--color-ink-secondary);
+  --text-muted: var(--color-ink-muted);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --surface: var(--color-surface-1-dark);
+  --surface-alt: var(--color-surface-2-dark);
+  --border: var(--color-border-dark);
+  --text: var(--color-ink-dark);
+  --text-secondary: var(--color-ink-secondary-dark);
+  --text-muted: var(--color-ink-muted-dark);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ============================================================
+   Base resets
+   ============================================================ */
+*,
+**::before,
+**::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   Scrollbar styling (thin, subtle)
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ============================================================
+   Focus ring (consistent across all interactive elements)
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   Selection color
+   ============================================================ */
+::selection {
+  background: #3b82f6;
+  color: #ffffff;
 }

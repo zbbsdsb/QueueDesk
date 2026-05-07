@@ -35,6 +35,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   TICKET_STATUS_CONFIG,
   TICKET_PRIORITY_CONFIG,
+  QUEUE_COLORS,
+  SLA_STATUS_COLORS,
   type TicketStatus,
   type TicketPriority,
 } from "@/lib/types";
@@ -70,10 +72,6 @@ type SLASummary = {
   breached: number;
   color: string;
 };
-
-// ── Color palette (shared with TICKET_STATUS_CONFIG) ─────────────────────
-
-const QUEUE_COLORS = ["#3b82f6", "#8b5cf6", "#f59e0b", "#10b981", "#ef4444", "#06b6d4"];
 
 // ── Sub-components ────────────────────────────────────────────────────────
 
@@ -434,8 +432,8 @@ export default function AgentDashboardPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="/app/new"
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors shadow-sm"
+              href="/agent/tickets/new"
+              className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
               New Ticket
@@ -600,7 +598,7 @@ export default function AgentDashboardPage() {
           ) : (
             <div className="px-5 py-12 text-center text-sm text-slate-400">
               No tickets yet.{" "}
-              <Link href="/app/new" className="text-blue-600 hover:underline">
+              <Link href="/agent/tickets/new" className="text-blue-600 hover:underline">
                 Create one
               </Link>
             </div>

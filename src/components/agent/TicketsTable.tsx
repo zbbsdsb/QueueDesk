@@ -310,8 +310,8 @@ export default function TicketsTable() {
               <RefreshCw className={`w-4 h-4 ${isPending ? "animate-spin" : ""}`} />
             </button>
             <button
-              onClick={() => router.push("/app/new")}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors shadow-sm"
+              onClick={() => router.push("/agent/tickets/new")}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-700 hover:bg-blue-800 text-white rounded-xl transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
               New Ticket
@@ -383,11 +383,29 @@ export default function TicketsTable() {
       {/* Table */}
       <div className="flex-1 overflow-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Loading tickets…</span>
+          <div className="space-y-1 p-2">
+            {/* Header skeleton */}
+            <div className="flex gap-4 px-4 py-2">
+              <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              <div className="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              <div className="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              <div className="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded animate-pulse ml-auto" />
             </div>
+            {/* Row skeletons */}
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  <div className={`h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse ${i % 3 === 0 ? "w-3/5" : i % 3 === 1 ? "w-2/5" : "w-1/2"}`} />
+                </div>
+                <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                <div className="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />
+                <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse hidden sm:block" />
+                <div className="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded animate-pulse ml-auto" />
+                <div className="h-4 w-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              </div>
+            ))}
           </div>
         ) : tickets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">

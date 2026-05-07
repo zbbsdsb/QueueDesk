@@ -77,3 +77,43 @@ export const VALID_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   closed: [],
   cancelled: [],
 };
+
+// ── AppUser role color config ─────────────────────────────
+export const APP_USER_ROLE_CONFIG: Record<
+  string,
+  { label: string; bg: string; text: string }
+> = {
+  owner: { label: "Owner", bg: "bg-violet-100 dark:bg-violet-900", text: "text-violet-700 dark:text-violet-300" },
+  admin: { label: "Admin", bg: "bg-blue-100 dark:bg-blue-900", text: "text-blue-700 dark:text-blue-300" },
+  agent: { label: "Agent", bg: "bg-cyan-100 dark:bg-cyan-900", text: "text-cyan-700 dark:text-cyan-300" },
+  requester: { label: "Requester", bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400" },
+};
+
+// ── AppUser status color config ──────────────────────────
+export const APP_USER_STATUS_CONFIG: Record<
+  string,
+  { label: string; bg: string; text: string }
+> = {
+  active: { label: "Active", bg: "bg-emerald-100 dark:bg-emerald-900", text: "text-emerald-700 dark:text-emerald-300" },
+  disabled: { label: "Disabled", bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-500 dark:text-slate-400" },
+  invited: { label: "Invited", bg: "bg-amber-100 dark:bg-amber-900", text: "text-amber-700 dark:text-amber-300" },
+};
+
+// ── Queue display colors (for pie/bar charts) ──────────────
+export const QUEUE_COLORS = [
+  "#3b82f6", // blue
+  "#8b5cf6", // violet
+  "#f59e0b", // amber
+  "#10b981", // emerald
+  "#ef4444", // red
+  "#06b6d4", // cyan
+  "#ec4899", // pink
+  "#84cc16", // lime
+] as const;
+
+// ── SLA status colors ─────────────────────────────────────
+export const SLA_STATUS_COLORS: Record<string, { dot: string; bg: string }> = {
+  on_track: { dot: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
+  at_risk: { dot: "bg-amber-500", bg: "bg-amber-50 dark:bg-amber-950/40" },
+  breached: { dot: "bg-red-500", bg: "bg-red-50 dark:bg-red-950/40" },
+};
