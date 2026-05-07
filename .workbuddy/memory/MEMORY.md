@@ -36,14 +36,17 @@
 - Email Intake Webhook（`/api/email/intake`）✅
 - Agent Dashboard（Recharts + 实时用户信息）✅
 - **Requester Portal 完整交付** ✅
-  - `/app/tickets` 我的工单列表（真实 Supabase 查询 + 筛选 + 搜索 + 排序）
-  - `/app/tickets/[id]` 工单详情（对话流 + 回复表单 + 元数据侧栏）
-  - `/app/profile` 个人设置（编辑昵称 + 登出）
-  - AppShell 动态用户信息 + 退出登录
+- **Admin Console 完整交付** ✅
+  - `/admin/users` 用户管理（邀请、角色编辑、状态切换）
+  - `/admin/teams` 团队 CRUD
+  - `/admin/queues` 队列 CRUD（优先级、路由模式、可见性）
+  - `/admin/sla` SLA 策略 CRUD（首响/解决时间）
+  - `/admin/roles` 角色权限参考页
+  - `/admin/settings` 工作区设置（名称、时区、门户权限）
+  - `/admin/approvals` 占位页（开发中）
 
 ### 待完成
 - Resend 邮件接入（需配置域名 + webhook URL）
-- Admin Console 全套 CRUD
 - Vercel 部署
 
 ### Git 工作流
