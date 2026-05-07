@@ -12,8 +12,10 @@ import {
   Bell,
   ChevronRight,
   Building2,
+  LogOut,
 } from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
@@ -42,27 +44,19 @@ function getPageTitle(pathname: string) {
 export default function AgentShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
-  const [userInitials, setUserInitials] = useState("AG");
-  const [userName, setUserName] = useState("Agent");
-  const [userEmail, setUserEmail] = useState("agent@workspace.com");
+  const { user } = useAuth();
+  const supabase = createClient();
 
-  useEffect(() => {
-    async function loadUser() {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const name = user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Agent";
-          setUserName(name);
-          setUserEmail(user.email ?? "");
-          setUserInitials(name.slice(0, 2).toUpperCase());
-        }
-      } catch {
-        // Use defaults
-      }
-    }
-    loadUser();
-  }, []);
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  }
+
+  const displayName = user?.display_name ?? user?.email?.split("@")[0] ?? "Agent";
+  const email = user?.email ?? "";
+  const initials = user?.display_name
+    ? user.display_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+    : email[0]?.toUpperCase() ?? "?";
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -106,7 +100,7 @@ export default function AgentShell({ children }: { children: React.ReactNode }) 
         {/* Settings */}
         <div className="p-3 border-t border-slate-100 dark:border-slate-800">
           <Link
-            href="/admin/settings"
+            href="/agent/settings"
             className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <Settings className="w-4 h-4 opacity-60" />
@@ -114,17 +108,24 @@ export default function AgentShell({ children }: { children: React.ReactNode }) 
           </Link>
         </div>
 
-        {/* Agent profile */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+        {/* Agent profile + sign out */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-1">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-              {userInitials}
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">{userName}</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{userEmail}</p>
+              <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">{displayName}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{email}</p>
             </div>
           </div>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sign out
+          </button>
         </div>
       </aside>
 
