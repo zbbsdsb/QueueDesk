@@ -9,8 +9,11 @@ import {
   LayoutDashboard,
   Building2,
   Bell,
+  LogOut,
 } from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
   { href: "/app/tickets", label: "My Tickets", icon: Ticket },
@@ -31,6 +34,17 @@ function getPageTitle(pathname: string) {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
+  const { user } = useAuth();
+  const supabase = createClient();
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  }
+
+  const initials = user?.display_name
+    ? user.display_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+    : user?.email?.[0]?.toUpperCase() ?? "?";
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -67,16 +81,27 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-1">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold">
-              AL
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">Alex Lee</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">IT Department</p>
+              <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                {user?.display_name ?? "User"}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                {user?.email ?? ""}
+              </p>
             </div>
           </div>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sign out
+          </button>
         </div>
       </aside>
 

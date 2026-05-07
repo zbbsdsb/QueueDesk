@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "sessions": {
+    "8af3bd396bd04da7aebd18f3bf16dfa8": [
+      {
+        "expertId": "SeniorDeveloper",
+        "name": "吴八哥",
+        "profession": "高级开发工程师",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/SeniorDeveloper/SeniorDeveloper.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/SeniorDeveloper/SeniorDeveloper_zh.md",
+        "usedAt": 1778133028073,
+        "industryId": "02-Engineering"
+      },
+      {
+        "expertId": "SeniorProjectManager",
+        "name": "关德豪",
+        "profession": "高级项目经理",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/07-ProjectManagement/SeniorProjectManager/SeniorProjectManager.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/07-ProjectManagement/SeniorProjectManager/SeniorProjectManager_zh.md",
+        "usedAt": 1778133016324,
+        "industryId": "07-ProjectManagement"
+      }
+    ]
+  },
+  "lastUpdated": 1778146004966
+}
