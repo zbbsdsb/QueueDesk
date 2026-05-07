@@ -45,9 +45,18 @@
   - `/admin/settings` 工作区设置（名称、时区、门户权限）
   - `/admin/approvals` 占位页（开发中）
 
+### 已交付功能（2026-05-07 晚）
+- **Resend 邮件完整集成** ✅
+  - `src/lib/email/resend.ts` — Resend 客户端，单例模式，未配置时静默跳过
+  - `src/lib/email/templates.ts` — 5 套品牌 HTML 邮件模板（工单创建/分配/评论/状态变更/SLA警告）
+  - `src/lib/email/sender.ts` — 类型安全的通知 API
+  - `/api/cron/sla` — SLA 监控 Cron（每分钟检查逾期工单，发邮件告警）
+  - `vercel.json` — Vercel Cron 配置
+  - 邮件失败不阻断工单操作（容错设计）
+
 ### 待完成
-- Resend 邮件接入（需配置域名 + webhook URL）
-- Vercel 部署
+- Resend 邮件需配置：`RESEND_API_KEY` + 发件域名（onboarding@resend.dev 为测试域名，上线需换成自己的域名）
+- Vercel 部署（连接 GitHub repo）
 
 ### Git 工作流
 - 每完成一个功能模块 commit（英文 conventional commits）
