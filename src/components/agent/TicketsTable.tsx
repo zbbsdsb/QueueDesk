@@ -25,6 +25,7 @@ import {
 
 type Ticket = {
   id: string;
+  ticket_no: number;
   subject: string;
   status: TicketStatus;
   priority: TicketPriority;
@@ -65,12 +66,17 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
       <td className="px-4 py-3.5">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full shrink-0 ${priorityCfg.dot}`} />
-          <Link
-            href={`/agent/tickets/${ticket.id}`}
-            className="text-sm font-medium text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 line-clamp-1 transition-colors"
-          >
-            {ticket.subject}
-          </Link>
+          <div className="min-w-0">
+            <Link
+              href={`/agent/tickets/${ticket.id}`}
+              className="text-sm font-medium text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 line-clamp-1 transition-colors"
+            >
+              {ticket.subject}
+            </Link>
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className="text-xs font-mono text-slate-400 dark:text-slate-500">#{ticket.ticket_no}</span>
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
           <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -170,7 +176,7 @@ export default function TicketsTable() {
     let query = supabase
       .from("ticket")
       .select(`
-        id, subject, status, priority, queue_id, assigned_agent_id, requester_id,
+        id, ticket_no, subject, status, priority, queue_id, assigned_agent_id, requester_id,
         created_at, updated_at,
         queue:queue_id(name),
         requester:requester_id(display_name, email),

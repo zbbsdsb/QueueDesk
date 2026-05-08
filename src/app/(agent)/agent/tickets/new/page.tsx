@@ -103,8 +103,8 @@ export default function AgentNewTicketPage() {
         subject: subject.trim(),
         description: description.trim() || null,
       })
-      .select("id")
-      .single() as unknown as { data: { id: string } | null; error: any });
+      .select("id,ticket_no")
+      .single() as unknown as { data: { id: string; ticket_no: number } | null; error: any });
 
     setLoading(false);
     if (error) {

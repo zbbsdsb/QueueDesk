@@ -29,6 +29,7 @@ import {
 
 type TicketDetail = {
   id: string;
+  ticket_no: number;
   subject: string;
   description: string | null;
   status: TicketStatus;
@@ -83,7 +84,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
     const { data, error } = await supabase
       .from("ticket")
       .select(`
-        id, subject, description, status, priority, queue_id, assigned_agent_id,
+        id, ticket_no, subject, description, status, priority, queue_id, assigned_agent_id,
         requester_id, lock_version, created_at, updated_at,
         queue:queue_id(id, name, slug),
         requester:requester_id(id, display_name, email),
@@ -219,9 +220,14 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
             </button>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-4">
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-white leading-tight">
-                  {ticket.subject}
-                </h1>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-mono font-medium text-slate-400 dark:text-slate-500">#{ticket.ticket_no}</span>
+                  </div>
+                  <h1 className="text-xl font-semibold text-slate-900 dark:text-white leading-tight">
+                    {ticket.subject}
+                  </h1>
+                </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {canTake && (
                     <button
