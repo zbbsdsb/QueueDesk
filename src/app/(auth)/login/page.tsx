@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,24 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const redirectTo = searchParams.get("redirect");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,8 +47,18 @@ export default function LoginPage() {
       });
       setLoading(false);
     } else {
-      toast({ title: "Welcome back!", description: "Redirecting…" });
-      router.push("/agent/dashboard");
+      // 优先使用 middleware 传入的 redirect 地址；否则根据角色分流
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        const { data: appUser } = await supabase
+          .from("app_user")
+          .select("role")
+          .single();
+        const destination =
+          appUser?.role === "requester" ? "/app/tickets" : "/agent/dashboard";
+        router.push(destination);
+      }
       router.refresh();
     }
   }

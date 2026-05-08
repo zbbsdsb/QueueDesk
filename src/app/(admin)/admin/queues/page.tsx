@@ -64,14 +64,15 @@ export default function AdminQueuesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => { loadQueues(); }, []);
-
   async function loadQueues() {
     setLoading(true);
     const { data } = await supabase.from("queue").select("*").is("deleted_at", null).order("created_at", { ascending: false });
     setQueues((data as Queue[]) ?? []);
     setLoading(false);
   }
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { void loadQueues(); }, []);
 
   function generateSlug(name: string) {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");

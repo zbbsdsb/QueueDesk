@@ -24,5 +24,5 @@ export async function createClient(): Promise<AnyClient> {
         },
       },
     }
-  ) as AnyClient
+  )
 }

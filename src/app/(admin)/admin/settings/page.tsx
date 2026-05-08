@@ -26,7 +26,7 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     if (user?.tenant_id) {
-      supabase.from("tenant").select("*").eq("id", user.tenant_id).single().then(({ data }: { data: Tenant | null }) => {
+      void supabase.from("tenant").select("*").eq("id", user.tenant_id).single().then(({ data }: { data: Tenant | null }) => {
         if (data) {
           setTenant(data as Tenant);
           setName(data.name);
@@ -35,9 +35,11 @@ export default function AdminSettingsPage() {
           setAllowPublic((settings?.allow_public_portal as boolean) ?? true);
           setRequireAuth((settings?.require_auth_for_portal as boolean) ?? true);
         }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(false);
       });
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
     }
   }, [user?.tenant_id]);

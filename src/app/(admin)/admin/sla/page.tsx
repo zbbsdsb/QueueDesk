@@ -43,14 +43,15 @@ export default function AdminSLAPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => { loadPolicies(); }, []);
-
   async function loadPolicies() {
     setLoading(true);
     const { data } = await supabase.from("sla_policy").select("*").is("deleted_at", null).order("created_at", { ascending: false });
     setPolicies((data as SLAPolicy[]) ?? []);
     setLoading(false);
   }
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { void loadPolicies(); }, []);
 
   async function getTenantId(): Promise<string> {
     const { data: { user } } = await supabase.auth.getUser();
