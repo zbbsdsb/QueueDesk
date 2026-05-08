@@ -55,10 +55,11 @@ export default function AgentNewTicketPage() {
         .order("display_name", { ascending: true, nullsFirst: false })
         .limit(50),
     ]);
-    setQueues((queuesRes.data ?? []) as unknown as Queue[]);
-    setRequesterOptions((usersRes.data ?? []) as unknown as AppUser[]);
-    if (queuesRes.data && queuesRes.data.length > 0) {
-      setQueueId(queuesRes.data[0].id);
+    const queues = (queuesRes.data ?? []) as Queue[];
+    setQueues(queues);
+    setRequesterOptions((usersRes.data ?? []) as AppUser[]);
+    if (queues.length > 0) {
+      setQueueId(queues[0].id);
     }
     setLoadingData(false);
   }, [user, supabase]);
@@ -93,8 +94,7 @@ export default function AgentNewTicketPage() {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
-      .from("ticket")
+    const { data, error } = await ((supabase.from("ticket") as any)
       .insert({
         tenant_id: user!.tenant_id,
         queue_id: queueId,
@@ -104,7 +104,7 @@ export default function AgentNewTicketPage() {
         description: description.trim() || null,
       })
       .select("id")
-      .single();
+      .single() as unknown as { data: { id: string } | null; error: any });
 
     setLoading(false);
     if (error) {
@@ -112,7 +112,7 @@ export default function AgentNewTicketPage() {
       return;
     }
     toast({ title: "Ticket created!" });
-    router.push(`/agent/tickets/${data.id}`);
+    router.push(`/agent/tickets/${data!.id}`);
   }
 
   const selectedRequester = requesterOptions.find((u) => u.id === requesterId);
