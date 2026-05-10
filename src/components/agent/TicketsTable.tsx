@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Clock,
 } from "lucide-react";
+import { getAge } from "@/lib/utils";
 
 type Ticket = {
   id: string;
@@ -136,17 +137,6 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
   );
 }
 
-function getAge(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "<1m";
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h`;
-  const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days}d`;
-  return `${Math.floor(days / 30)}mo`;
-}
 
 export default function TicketsTable() {
   const { user } = useAuth();

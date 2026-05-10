@@ -5,6 +5,7 @@ import { Search, Plus, Edit2, Archive, Layers } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
+import { timeAgo } from "@/lib/utils";
 
 type Team = Database["public"]["Tables"]["team"]["Row"];
 
@@ -13,16 +14,6 @@ const STATUS_COLORS: Record<string, string> = {
   paused: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
   archived: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
 };
-
-function timeAgo(date: string) {
-  const d = new Date(date);
-  const diff = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`;
-  return d.toLocaleDateString();
-}
 
 interface TeamForm {
   name: string;

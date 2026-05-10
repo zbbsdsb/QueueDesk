@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import type { Database } from "@/lib/supabase/types";
 import { APP_USER_ROLE_CONFIG, APP_USER_STATUS_CONFIG } from "@/lib/types";
+import { timeAgo } from "@/lib/utils";
 
 type AppUser = Database["public"]["Tables"]["app_user"]["Row"];
 type AppUserRole = Database["public"]["Tables"]["app_user"]["Row"]["role"];
@@ -18,16 +19,6 @@ const ROLE_OPTIONS: { value: AppUserRole; label: string }[] = [
   { value: "owner", label: "Owner" },
 ];
 
-function timeAgo(date: string) {
-  const d = new Date(date);
-  const now = new Date();
-  const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`;
-  return d.toLocaleDateString();
-}
 
 interface InviteModalState {
   email: string;

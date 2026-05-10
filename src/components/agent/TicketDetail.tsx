@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
+import { getAge } from "@/lib/utils";
 
 type TicketDetail = {
   id: string;
@@ -55,15 +56,6 @@ type Comment = {
   author?: { id: string; display_name: string | null; email: string };
 };
 
-function getAge(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "<1m";
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h`;
-  return `${Math.floor(hrs / 24)}d`;
-}
 
 export default function TicketDetail({ ticketId }: { ticketId: string }) {
   const { user } = useAuth();

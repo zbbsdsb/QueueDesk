@@ -40,6 +40,7 @@ import {
   type TicketStatus,
   type TicketPriority,
 } from "@/lib/types";
+import { getAge } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -141,18 +142,6 @@ function TicketRow({ ticket }: { ticket: TicketWithQueue }) {
       <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0 group-hover:text-blue-500 transition-colors" />
     </Link>
   );
-}
-
-function getAge(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "<1m";
-  if (mins < 60) return `${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h`;
-  const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days}d`;
-  return `${Math.floor(days / 30)}mo`;
 }
 
 // ── Main page ────────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import { Search, Plus, Edit2, Archive, ListTodo } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
+import { timeAgo } from "@/lib/utils";
 
 type Queue = Database["public"]["Tables"]["queue"]["Row"];
 
@@ -31,13 +32,6 @@ const VISIBILITY_LABELS: Record<string, string> = {
   internal: "Internal",
   restricted: "Restricted",
 };
-
-function timeAgo(date: string) {
-  const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(date).toLocaleDateString();
-}
 
 interface QueueForm {
   name: string;
