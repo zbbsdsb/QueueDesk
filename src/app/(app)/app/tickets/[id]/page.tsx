@@ -97,8 +97,8 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
         .order("created_at", { ascending: true }),
     ]);
 
-    if (t) setTicket(t as unknown as TicketWithRelations);
-    if (cs) setComments((cs as unknown as TicketCommentWithAuthor[]) ?? []);
+    if (t) setTicket(t as TicketWithRelations);
+    if (cs) setComments((cs as TicketCommentWithAuthor[]) ?? []);
     setLoading(false);
   }
 
@@ -141,7 +141,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
       setReplyError(error.message);
       setSubmitting(false);
     } else if (data) {
-      setComments((prev) => [...prev, data as unknown as TicketCommentWithAuthor]);
+      setComments((prev) => [...prev, data as TicketCommentWithAuthor]);
       setReplyText("");
       setSubmitting(false);
       // Update ticket updated_at optimistically

@@ -50,14 +50,14 @@ export default function AdminSettingsPage() {
     setError("");
     setSaved(false);
     try {
-      const settings = {
+      const settings: Json = {
         timezone,
         allow_public_portal: allowPublic,
         require_auth_for_portal: requireAuth,
       };
       const { error: err } = await supabase
         .from("tenant")
-        .update({ name, settings: settings as unknown as Json, updated_at: new Date().toISOString() })
+        .update({ name, settings, updated_at: new Date().toISOString() })
         .eq("id", tenant.id);
       if (err) throw err;
       setSaved(true);

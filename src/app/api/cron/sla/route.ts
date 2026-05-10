@@ -102,8 +102,10 @@ export async function GET(req: NextRequest) {
 
     for (const ticket of tickets) {
       try {
-        const queue = ticket.queue as any;
-        const agent = ticket.assigned_agent as any;
+        type QueueRelation = { id: string; name: string; slug: string; sla_policy_id: string | null } | null;
+        type AgentRelation = { id: string; display_name: string | null; email: string } | null;
+        const queue = ticket.queue as QueueRelation;
+        const agent = ticket.assigned_agent as AgentRelation;
         const sla = slaMap.get(queue?.sla_policy_id ?? null) as {
           id: string;
           name: string;

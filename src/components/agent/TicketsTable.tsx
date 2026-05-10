@@ -192,7 +192,7 @@ export default function TicketsTable() {
     if (error) {
       toast({ variant: "destructive", title: "Failed to load tickets", description: error.message });
     } else {
-      let result = data as unknown as Ticket[];
+      let result = (data ?? []) as Ticket[];
 
       if (filters.priority !== "all") {
         // Already filtered via query

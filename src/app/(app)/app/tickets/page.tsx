@@ -66,7 +66,7 @@ export default function MyTicketsPage() {
     const { data, error } = await query;
 
     if (!error && data) {
-      setTickets(data as unknown as TicketWithRelations[]);
+      setTickets(data as TicketWithRelations[]);
     }
     setLoading(false);
   }

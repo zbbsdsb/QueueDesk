@@ -20,13 +20,11 @@ export default function AgentSettingsPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("app_user")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .select("display_name, email" as any)
+      .select("display_name, email")
       .eq("id", user.id)
       .single();
     if (!error && data) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setDisplayName((data as any).display_name ?? "");
+      setDisplayName(data.display_name ?? "");
     }
     setLoading(false);
   }, [user, supabase]);
@@ -39,8 +37,8 @@ export default function AgentSettingsPage() {
     e.preventDefault();
     if (!user) return;
     setSaving(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("app_user") as any)
+    const { error } = await supabase
+      .from("app_user")
       .update({ display_name: displayName.trim() || null })
       .eq("id", user.id);
     if (error) {

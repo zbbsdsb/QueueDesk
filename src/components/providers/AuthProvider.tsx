@@ -13,7 +13,9 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue>({
-  supabase: null as unknown as SupabaseClient<Database>,
+  // createContext default value is never actually used — AuthProvider always wraps the tree.
+  // Using null! to satisfy the type without a double-cast.
+  supabase: null!,
   user: null,
   loading: true,
 });
@@ -28,6 +30,7 @@ export function AuthProvider({
   children: React.ReactNode;
 }) {
   const [user, setUser] = useState<AppUser | null>(initialUser);
+  const [loading, setLoading] = useState(initialUser === undefined);
 
   useEffect(() => {
     const {
@@ -43,13 +46,14 @@ export function AuthProvider({
       } else {
         setUser(null);
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, [supabase]);
 
   return (
-    <AuthContext.Provider value={{ supabase, user, loading: false }}>
+    <AuthContext.Provider value={{ supabase, user, loading }}>
       {children}
     </AuthContext.Provider>
   );

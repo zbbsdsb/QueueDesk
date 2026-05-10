@@ -275,7 +275,7 @@ export default function AgentDashboardPage() {
         .order("created_at", { ascending: false })
         .limit(5);
 
-      setRecentTickets((recent ?? []) as unknown as TicketWithQueue[]);
+      setRecentTickets((recent as TicketWithQueue[]) ?? []);
 
       // 5. SLA summary (simplified: based on ticket counts by status)
       const { count: openCount } = await supabase

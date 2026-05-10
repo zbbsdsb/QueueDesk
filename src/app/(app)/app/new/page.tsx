@@ -50,7 +50,7 @@ export default function NewTicketPage() {
         .eq("tenant_id", user.tenant_id)
         .eq("status", "active")
         .order("name");
-      setQueues((data as unknown as Queue[]) ?? []);
+      setQueues((data as Queue[]) ?? []);
       if (data?.[0]) setQueueId(data[0].id);
       setLoadingQueues(false);
     };

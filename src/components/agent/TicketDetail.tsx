@@ -90,7 +90,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
       router.push("/agent/tickets");
       return;
     }
-    setTicket(data as unknown as TicketDetail);
+    setTicket(data as TicketDetail);
     fetchComments();
   }
 
@@ -104,7 +104,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
       .eq("ticket_id", ticketId)
       .order("created_at", { ascending: true });
 
-    setComments((data as unknown as Comment[]) ?? []);
+    setComments((data as Comment[]) ?? []);
     setLoading(false);
   }
 

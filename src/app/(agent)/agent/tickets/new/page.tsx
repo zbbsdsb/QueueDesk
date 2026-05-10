@@ -82,7 +82,7 @@ export default function AgentNewTicketPage() {
         .eq("status", "active")
         .or(`display_name.ilike.%${requesterSearch}%,email.ilike.%${requesterSearch}%`)
         .limit(10);
-      setRequesterOptions((data ?? []) as unknown as AppUser[]);
+      setRequesterOptions((data ?? []) as AppUser[]);
     }, 300);
     return () => clearTimeout(timer);
   }, [requesterSearch, supabase, user?.tenant_id]);
@@ -94,7 +94,8 @@ export default function AgentNewTicketPage() {
       return;
     }
     setLoading(true);
-    const { data, error } = await ((supabase.from("ticket") as any)
+    const { data, error } = await supabase
+      .from("ticket")
       .insert({
         tenant_id: user!.tenant_id,
         queue_id: queueId,
@@ -103,8 +104,8 @@ export default function AgentNewTicketPage() {
         subject: subject.trim(),
         description: description.trim() || null,
       })
-      .select("id,ticket_no")
-      .single() as unknown as { data: { id: string; ticket_no: number } | null; error: any });
+      .select("id, ticket_no")
+      .single();
 
     setLoading(false);
     if (error) {
