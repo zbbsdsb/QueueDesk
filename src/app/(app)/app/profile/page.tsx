@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -22,9 +22,28 @@ export default function ProfilePage() {
   const router = useRouter();
 
   const [displayName, setDisplayName] = useState(user?.display_name ?? "");
+  const [tenantName, setTenantName] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!user?.tenant_id) return;
+
+    async function fetchTenantName() {
+      const { data, error } = await supabase
+        .from("tenant")
+        .select("name")
+        .eq("id", user.tenant_id)
+        .single();
+
+      if (!error && data) {
+        setTenantName(data.name);
+      }
+    }
+
+    fetchTenantName();
+  }, [user?.tenant_id, supabase]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -135,9 +154,9 @@ export default function ProfilePage() {
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               <input
                 type="text"
-                value={user.tenant_id}
+                value={tenantName ?? user.tenant_id}
                 readOnly
-                className="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 cursor-not-allowed font-mono"
+                className="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 cursor-not-allowed"
               />
             </div>
           </div>

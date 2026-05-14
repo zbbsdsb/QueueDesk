@@ -1,6 +1,10 @@
-# QueueDesk
+<div align="center">
+  <img src="logo.png" alt="QueueDesk logo" width="120" height="120">
+  <h1>QueueDesk</h1>
+  <p>AI-first internal service desk SaaS for modern teams</p>
+</div>
 
-> AI-first internal service desk SaaS for modern teams.
+---
 
 **QueueDesk** routes, prioritises, and resolves support tickets automatically — powered by AI, built for 20–500 person companies.
 
@@ -143,3 +147,18 @@ perf:     Performance improvement
 ## License
 
 MIT
+
+---
+
+<p align="center">
+  <strong>🏢 Oasis Company</strong><br>
+  <a href="https://github.com/zbbsdsb">GitHub Organization</a>
+</p>
+
+<p align="center">
+  Explore our ecosystem:
+  <a href="https://github.com/zbbsdsb/QueueDesk">QueueDesk</a> ·
+  <a href="https://github.com/zbbsdsb/muserock">MuseRock</a> ·
+  <a href="https://github.com/zbbsdsb/R-U-Socrates">R U Socrates</a> ·
+  <a href="https://github.com/zbbsdsb/pwl-reading-companion">pwl-reading</a>
+</p>

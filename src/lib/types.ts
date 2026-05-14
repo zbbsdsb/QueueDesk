@@ -13,6 +13,7 @@ export type TicketWithRelations = {
   queue_id: string;
   requester_id: string;
   assigned_agent_id: string | null;
+  ticket_no: number;
   status: TicketStatus;
   priority: TicketPriority;
   subject: string;

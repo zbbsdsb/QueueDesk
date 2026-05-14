@@ -61,6 +61,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(homePath, request.url))
   }
 
+  // 已登录：访问根路径 / → 按角色跳转对应首页
+  if (user && pathname === '/') {
+    const homePath = await getHomePath(request, supabase)
+    return NextResponse.redirect(new URL(homePath, request.url))
+  }
+
   return response
 }
 

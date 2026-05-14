@@ -360,34 +360,113 @@ export type Database = {
       }
       invite: {
         Row: {
-          id: string
-          tenant_id: string
-          email: string
-          role: "owner" | "admin" | "agent" | "requester"
-          token: string
-          expires_at: string
-          accepted_at: string | null
-          created_at: string
+          id: string;
+          tenant_id: string;
+          email: string;
+          role: "owner" | "admin" | "agent" | "requester";
+          token: string;
+          expires_at: string;
+          accepted_at: string | null;
+          created_at: string;
         }
         Insert: {
-          id?: string
-          tenant_id: string
-          email: string
-          role: "owner" | "admin" | "agent" | "requester"
-          token: string
-          expires_at: string
-          accepted_at?: string | null
-          created_at?: string
+          id?: string;
+          tenant_id: string;
+          email: string;
+          role: "owner" | "admin" | "agent" | "requester";
+          token: string;
+          expires_at: string;
+          accepted_at?: string | null;
+          created_at?: string;
         }
         Update: {
-          id?: string
-          tenant_id?: string
-          email?: string
-          role?: "owner" | "admin" | "agent" | "requester"
-          token?: string
-          expires_at?: string
-          accepted_at?: string | null
-          created_at?: string
+          id?: string;
+          tenant_id?: string;
+          email?: string;
+          role?: "owner" | "admin" | "agent" | "requester";
+          token?: string;
+          expires_at?: string;
+          accepted_at?: string | null;
+          created_at?: string;
+        }
+      }
+      kb_category: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        }
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        }
+        Update: {
+          id?: string;
+          tenant_id?: string;
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        }
+      }
+      kb_article: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          category_id: string | null;
+          title: string;
+          slug: string;
+          body: string;
+          author_id: string;
+          status: "draft" | "published" | "archived";
+          view_count: number;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        }
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          category_id?: string | null;
+          title: string;
+          slug: string;
+          body?: string;
+          author_id?: string;
+          status?: "draft" | "published" | "archived";
+          view_count?: number;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        }
+        Update: {
+          id?: string;
+          tenant_id?: string;
+          category_id?: string | null;
+          title?: string;
+          slug?: string;
+          body?: string;
+          author_id?: string;
+          status?: "draft" | "published" | "archived";
+          view_count?: number;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
         }
       }
     }
