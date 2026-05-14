@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/client";
+import { notifyNewTicket } from "@/lib/slack/notifier";
 
 /**
  * Email Intake Webhook Handler
@@ -264,6 +266,31 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`[Email Intake] Created ticket ${ticket.ticket_no} from ${fromEmail}`);
+
+    const { data: contactData } = await supabase
+      .from("contact")
+      .select("display_name, primary_email")
+      .eq("id", contactId)
+      .single();
+
+    const { data: queueData } = await supabase
+      .from("queue")
+      .select("name")
+      .eq("id", queueId)
+      .single();
+
+    const clientSupabase = createClient();
+    notifyNewTicket(clientSupabase, {
+      tenantId: queueWithTenant.tenant_id,
+      ticketId: ticket.id,
+      ticketNo: ticket.ticket_no,
+      subject: subject.slice(0, 200),
+      priority: "normal",
+      status: "open",
+      requesterName: contactData?.display_name ?? fromEmail.split("@")[0],
+      requesterEmail: fromEmail,
+      queueName: queueData?.name ?? "General",
+    });
 
     return NextResponse.json({
       received: true,

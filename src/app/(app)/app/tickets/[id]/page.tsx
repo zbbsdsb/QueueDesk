@@ -72,7 +72,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
         .select(
           `
           id, tenant_id, queue_id, requester_id, assigned_agent_id,
-          status, priority, subject, description, created_at, updated_at,
+          status, priority, subject, description, sla_deadline, created_at, updated_at,
           queue:queue_id(name, slug),
           assigned_agent:assigned_agent_id(display_name, email),
           requester:requester_id(display_name, email)

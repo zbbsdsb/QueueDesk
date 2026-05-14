@@ -8,6 +8,7 @@ import {
   Clock,
   GitBranch,
   Settings,
+  FileText,
 } from "lucide-react";
 import ShellLayout, { type NavItem } from "@/components/shared/ShellLayout";
 
@@ -18,6 +19,7 @@ const navItems: NavItem[] = [
   { href: "/admin/queues", label: "Queues", icon: ListTodo },
   { href: "/admin/sla", label: "SLA Policies", icon: Clock },
   { href: "/admin/approvals", label: "Approvals", icon: GitBranch },
+  { href: "/admin/audit", label: "Audit Log", icon: FileText },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
@@ -28,6 +30,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/queues": "Queues",
   "/admin/sla": "SLA Policies",
   "/admin/approvals": "Approvals",
+  "/admin/audit": "Audit Log",
   "/admin/settings": "Settings",
 };
 

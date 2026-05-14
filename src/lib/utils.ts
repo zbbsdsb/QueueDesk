@@ -1,7 +1,49 @@
+import crypto from "crypto";
+
 /**
  * Shared utility functions — single source of truth for time formatting.
  * Import from here instead of copy-pasting across pages/components.
  */
+
+const TOKEN_SECRET = process.env.TICKET_TOKEN_SECRET || "fallback-secret-change-me-in-prod";
+
+/**
+ * Generates a signed token for public ticket access.
+ * Format: base64url(ticketId) + "." + base64url(hmac-sha256(ticketId, secret))
+ */
+export function generatePublicTicketToken(ticketId: string): string {
+  const ticketIdB64 = Buffer.from(ticketId).toString("base64url");
+  const hmac = crypto.createHmac("sha256", TOKEN_SECRET);
+  hmac.update(ticketId);
+  const signature = hmac.digest("base64url");
+  return `${ticketIdB64}.${signature}`;
+}
+
+/**
+ * Verifies a signed token and returns the ticket ID if valid.
+ * Returns null if invalid.
+ */
+export function verifyPublicTicketToken(token: string): string | null {
+  try {
+    const [ticketIdB64, signature] = token.split(".");
+    if (!ticketIdB64 || !signature) return null;
+
+    const ticketId = Buffer.from(ticketIdB64, "base64url").toString("utf8");
+    const expectedHmac = crypto.createHmac("sha256", TOKEN_SECRET);
+    expectedHmac.update(ticketId);
+    const expectedSignature = expectedHmac.digest("base64url");
+
+    // Use timing-safe comparison to prevent timing attacks
+    const isValid = crypto.timingSafeEqual(
+      Buffer.from(signature, "base64url"),
+      Buffer.from(expectedSignature, "base64url")
+    );
+
+    return isValid ? ticketId : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Returns a compact relative time string suitable for dense UIs (tables, rows).
