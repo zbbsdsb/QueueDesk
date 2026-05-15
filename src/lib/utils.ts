@@ -1,4 +1,10 @@
 import crypto from "crypto";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 /**
  * Shared utility functions — single source of truth for time formatting.
@@ -90,4 +96,17 @@ export function formatDate(dateStr: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/**
+ * SLA time conversion utilities.
+ * Database uses seconds for precision, UI uses minutes for user-friendliness.
+ */
+export function minutesToSeconds(minutes: number): number {
+  return Math.max(0, minutes * 60);
+}
+
+export function secondsToMinutes(seconds: number | null | undefined): number {
+  if (seconds == null) return 0;
+  return Math.max(0, seconds / 60);
 }

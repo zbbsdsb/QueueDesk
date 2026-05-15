@@ -2,9 +2,10 @@
 
 import * as React from "react";
 
-/* Inline type definitions to avoid circular import */
+type ToastVariant = "default" | "destructive" | "success" | "warning" | "info";
+
 interface ToastProps extends Omit<React.ComponentProps<"div">, "title"> {
-  variant?: "default" | "destructive";
+  variant?: ToastVariant;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: React.ReactElement;

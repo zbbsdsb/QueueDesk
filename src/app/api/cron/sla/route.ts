@@ -14,10 +14,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { notifySLAWarning } from "@/lib/email/sender";
+import { secondsToMinutes } from "@/lib/utils";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
 export const dynamic = "force-dynamic";
+
+// Database uses seconds for SLA targets
+interface SLAPolicyFromDB {
+  id: string;
+  name: string;
+  first_response_seconds: number | null;
+  resolution_seconds: number | null;
+  status: string;
+}
 
 export async function GET(req: NextRequest) {
   // Verify cron secret (skip in Vercel cron context)
@@ -81,14 +91,14 @@ export async function GET(req: NextRequest) {
       .in("status", ["open", "in_progress", "pending"])
       .is("sla_breach_notified_at", null);
 
-    // Also fetch SLA policies separately to avoid array-relation type issues
+    // Also fetch SLA policies separately - database uses seconds
     const { data: slaPolicies } = await supabase
       .from("sla_policy")
-      .select("id, name, first_response_target_minutes, resolution_target_minutes")
+      .select("id, name, first_response_seconds, resolution_seconds")
       .eq("status", "active");
 
     const slaMap = new Map(
-      (slaPolicies ?? []).map((p) => [p.id, p])
+      (slaPolicies as unknown as SLAPolicyFromDB[] ?? []).map((p) => [p.id, p])
     );
 
     if (ticketError) {
@@ -106,12 +116,8 @@ export async function GET(req: NextRequest) {
         type AgentRelation = { id: string; display_name: string | null; email: string } | null;
         const queue = ticket.queue as QueueRelation;
         const agent = ticket.assigned_agent as AgentRelation;
-        const sla = slaMap.get(queue?.sla_policy_id ?? null) as {
-          id: string;
-          name: string;
-          first_response_target_minutes: number;
-          resolution_target_minutes: number;
-        } | undefined;
+        const sla = slaMap.get(queue?.sla_policy_id ?? null);
+        
         if (!sla) continue; // No SLA policy attached to this queue
 
         const createdAt = new Date(ticket.created_at);
@@ -120,14 +126,18 @@ export async function GET(req: NextRequest) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
         const ticketUrl = `${baseUrl}/agent/tickets/${ticket.id}`;
 
+        // Convert seconds to minutes for comparison
+        const firstRespMinutes = secondsToMinutes(sla.first_response_seconds);
+        const resolutionMinutes = secondsToMinutes(sla.resolution_seconds);
+
         // First response check
         if (
-          sla.first_response_target_minutes > 0 &&
-          minutesElapsed > sla.first_response_target_minutes &&
+          firstRespMinutes > 0 &&
+          minutesElapsed > firstRespMinutes &&
           !ticket.sla_first_response_at &&
           !ticket.sla_breach_notified_at
         ) {
-          const minutesOverdue = minutesElapsed - sla.first_response_target_minutes;
+          const minutesOverdue = minutesElapsed - firstRespMinutes;
 
           if (agent) {
             await notifySLAWarning({
@@ -153,12 +163,12 @@ export async function GET(req: NextRequest) {
 
         // Resolution check
         if (
-          sla.resolution_target_minutes > 0 &&
-          minutesElapsed > sla.resolution_target_minutes &&
+          resolutionMinutes > 0 &&
+          minutesElapsed > resolutionMinutes &&
           !ticket.sla_resolution_at &&
           !ticket.sla_breach_notified_at
         ) {
-          const minutesOverdue = minutesElapsed - sla.resolution_target_minutes;
+          const minutesOverdue = minutesElapsed - resolutionMinutes;
 
           if (agent) {
             await notifySLAWarning({

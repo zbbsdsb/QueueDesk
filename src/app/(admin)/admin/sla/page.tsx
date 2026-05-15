@@ -5,8 +5,24 @@ import { Search, Plus, Edit2, Archive, Clock } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/types";
+import { minutesToSeconds, secondsToMinutes } from "@/lib/utils";
 
-type SLAPolicy = Database["public"]["Tables"]["sla_policy"]["Row"];
+// Database uses seconds, but we'll use minutes in the UI
+type SLAPolicyRow = Database["public"]["Tables"]["sla_policy"]["Row"];
+
+interface SLAPolicyWithMinutes extends Omit<SLAPolicyRow, "first_response_target_minutes" | "resolution_target_minutes"> {
+  first_response_seconds: number | null;
+  next_response_seconds: number | null;
+  resolution_seconds: number | null;
+}
+
+interface SLAForm {
+  name: string;
+  description: string;
+  first_response_target_minutes: number;
+  resolution_target_minutes: number;
+  status: "active" | "archived";
+}
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
@@ -29,11 +45,11 @@ interface SLAForm {
 
 export default function AdminSLAPage() {
   const supabase = createClient();
-  const [policies, setPolicies] = useState<SLAPolicy[]>([]);
+  const [policies, setPolicies] = useState<SLAPolicyWithMinutes[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
-  const [editPolicy, setEditPolicy] = useState<SLAPolicy | null>(null);
+  const [editPolicy, setEditPolicy] = useState<SLAPolicyWithMinutes | null>(null);
   const [form, setForm] = useState<SLAForm>({
     name: "", description: "",
     first_response_target_minutes: 60,
@@ -45,12 +61,13 @@ export default function AdminSLAPage() {
 
   async function loadPolicies() {
     setLoading(true);
+    // Database schema uses seconds: first_response_seconds, resolution_seconds
     const { data } = await supabase.from("sla_policy").select("*").is("deleted_at", null).order("created_at", { ascending: false });
-    setPolicies((data as SLAPolicy[]) ?? []);
+    setPolicies((data as unknown as SLAPolicyWithMinutes[]) ?? []);
     setLoading(false);
   }
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { void loadPolicies(); }, []);
 
   async function getTenantId(): Promise<string> {
@@ -64,13 +81,22 @@ export default function AdminSLAPage() {
     setSaving(true);
     setError("");
     try {
+      // Convert minutes to seconds for database
+      const dbData = {
+        name: form.name,
+        description: form.description,
+        first_response_seconds: minutesToSeconds(form.first_response_target_minutes),
+        resolution_seconds: minutesToSeconds(form.resolution_target_minutes),
+        status: form.status,
+      };
+      
       if (isNew) {
         const tenantId = await getTenantId();
-        const { error: err } = await supabase.from("sla_policy").insert({ ...form, tenant_id: tenantId });
+        const { error: err } = await supabase.from("sla_policy").insert({ ...dbData, tenant_id: tenantId });
         if (err) throw err;
         setCreateOpen(false);
       } else if (editPolicy) {
-        const { error: err } = await supabase.from("sla_policy").update(form).eq("id", editPolicy.id);
+        const { error: err } = await supabase.from("sla_policy").update(dbData).eq("id", editPolicy.id);
         if (err) throw err;
         setEditPolicy(null);
       }
@@ -82,7 +108,7 @@ export default function AdminSLAPage() {
     }
   }
 
-  async function handleArchive(policy: SLAPolicy) {
+  async function handleArchive(policy: SLAPolicyWithMinutes) {
     await supabase.from("sla_policy").update({ status: "archived" }).eq("id", policy.id);
     await loadPolicies();
   }
@@ -121,43 +147,59 @@ export default function AdminSLAPage() {
             <p className="text-sm text-slate-400">No SLA policies yet.</p>
           </div>
         ) : (
-          filtered.map((policy) => (
-            <div key={policy.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex items-center justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
-                  <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{policy.name}</h3>
-                    <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${STATUS_COLORS[policy.status]}`}>{policy.status}</span>
+          filtered.map((policy) => {
+            // Convert seconds to minutes for display
+            const firstRespMinutes = secondsToMinutes(policy.first_response_seconds);
+            const resolutionMinutes = secondsToMinutes(policy.resolution_seconds);
+            
+            return (
+              <div key={policy.id}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex items-center justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
+                    <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   </div>
-                  <div className="flex items-center gap-4 mt-1">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      First response: <strong className="text-slate-700 dark:text-slate-300">{formatHours(policy.first_response_target_minutes)}</strong>
-                    </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      Resolution: <strong className="text-slate-700 dark:text-slate-300">{formatHours(policy.resolution_target_minutes)}</strong>
-                    </span>
-                    {policy.description && <span className="text-xs text-slate-400 dark:text-slate-500">{policy.description}</span>}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{policy.name}</h3>
+                      <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${STATUS_COLORS[policy.status]}`}>{policy.status}</span>
+                    </div>
+                    <div className="flex items-center gap-4 mt-1">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        First response: <strong className="text-slate-700 dark:text-slate-300">{formatHours(firstRespMinutes)}</strong>
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        Resolution: <strong className="text-slate-700 dark:text-slate-300">{formatHours(resolutionMinutes)}</strong>
+                      </span>
+                      {policy.description && <span className="text-xs text-slate-400 dark:text-slate-500">{policy.description}</span>}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button onClick={() => { setForm({ name: policy.name, description: policy.description ?? "", first_response_target_minutes: policy.first_response_target_minutes, resolution_target_minutes: policy.resolution_target_minutes, status: policy.status }); setError(""); setEditPolicy(policy); }}
-                  className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors">
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                {policy.status !== "archived" && (
-                  <button onClick={() => handleArchive(policy)}
-                    className="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
-                    <Archive className="w-4 h-4" />
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={() => { 
+                    setForm({ 
+                      name: policy.name, 
+                      description: policy.description ?? "", 
+                      first_response_target_minutes: firstRespMinutes, 
+                      resolution_target_minutes: resolutionMinutes, 
+                      status: policy.status 
+                    }); 
+                    setError(""); 
+                    setEditPolicy(policy); 
+                  }}
+                    className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors">
+                    <Edit2 className="w-4 h-4" />
                   </button>
-                )}
+                  {policy.status !== "archived" && (
+                    <button onClick={() => handleArchive(policy)}
+                      className="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+                      <Archive className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

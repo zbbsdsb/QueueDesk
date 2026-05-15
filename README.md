@@ -2,6 +2,23 @@
   <img src="logo.png" alt="QueueDesk logo" width="120" height="120">
   <h1>QueueDesk</h1>
   <p>AI-first internal service desk SaaS for modern teams</p>
+
+  <!-- Badges -->
+  <div align="center" style="margin: 20px 0;">
+    <img src="https://github.com/zbbsdsb/QueueDesk/actions/workflows/ci.yml/badge.svg" alt="Build Status">
+    <img src="https://img.shields.io/github/license/zbbsdsb/QueueDesk" alt="License">
+    <img src="https://img.shields.io/github/stars/zbbsdsb/QueueDesk?style=social" alt="Stars">
+    <img src="https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white" alt="TypeScript">
+    <img src="https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js&logoColor=white" alt="Next.js">
+    <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat&logo=supabase&logoColor=white" alt="Supabase">
+  </div>
+
+  <!-- Deployment Buttons -->
+  <div align="center" style="margin: 20px 0;">
+    <a href="https://vercel.com/new/clone?repository-url=https://github.com/zbbsdsb/QueueDesk"><img src="https://vercel.com/button" alt="Deploy with Vercel" height="32"></a>
+    <a href="https://railway.app/new/template?template=https://github.com/zbbsdsb/QueueDesk"><img src="https://railway.app/button.svg" alt="Deploy on Railway" height="32"></a>
+    <a href="https://render.com/deploy?repo=https://github.com/zbbsdsb/QueueDesk"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="32"></a>
+  </div>
 </div>
 
 ---
@@ -23,6 +40,40 @@
 | Email | Resend (planned) |
 | Hosting | Vercel (planned) |
 | Queue/Workers | BullMQ (planned) |
+
+## Features
+
+| Icon | Feature | Description |
+|------|---------|-------------|
+| 🤖 | AI智能分类 | 自动将工单分类到正确的队列，减少人工分拣 |
+| 💬 | Slack 集成 | 与团队常用沟通工具无缝衔接，支持通知和交互 |
+| 🏢 | 多租户架构 | 完整隔离的企业级多租户支持，RLS保障数据安全 |
+| 📊 | 实时仪表板 | 实时查看工单状态、SLA达成率和团队绩效 |
+| ⏱️ | SLA管理 | 灵活的SLA规则定义，自动追踪和预警 |
+| 📚 | 知识库 | 集成向量搜索的智能知识库，支持AI推荐答案 |
+| 📧 | 邮件收件箱 | 自动从邮件创建工单，支持双向邮件通信 |
+| 🔄 | BullMQ 队列 | 可靠的异步任务处理，支持邮件发送和AI调用 |
+| 🔗 | 开放API | 完整的REST API，便于与企业系统集成 |
+| 🌐 | 自托管部署 | 完全开源，可在自己的基础设施上部署 |
+
+## Feature Comparison
+
+| Feature | QueueDesk | Freshdesk | Zendesk | Response (OSS) |
+|---------|:---------:|:---------:|:-------:|:--------------:|
+| 开源 | ✅ | ❌ | ❌ | ✅ |
+| AI-First | ✅ | ⚠️ 付费插件 | ⚠️ 付费插件 | ❌ |
+| 自托管 | ✅ | ❌ | ❌ | ✅ |
+| 多租户 | ✅ | ✅ | ✅ | ❌ |
+| 免费计划 | ✅ | ⚠️ 限制 | ⚠️ 限制 | ✅ |
+| SLA管理 | ✅ | ✅ | ✅ | ❌ |
+| 知识库 + 向量搜索 | ✅ | ✅ | ✅ | ❌ |
+| 邮件收件箱 | ✅ | ✅ | ✅ | ✅ |
+| Slack 集成 | ✅ | ✅ | ✅ | ❌ |
+| 实时仪表板 | ✅ | ✅ | ✅ | ⚠️ 基础 |
+| 开发者友好 | ✅ | ⚠️ | ❌ | ✅ |
+| 适合规模 | 20-500人 | 任何规模 | 中大型 | 小团队 |
+
+> ✅ = 原生支持 / ⚠️ = 部分支持或需付费 / ❌ = 不支持
 
 ## Three Portals
 

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "nixpacks": {
+      "providers": {
+        "node": {
+          "buildCommand": "npm run build",
+          "startCommand": "npm start"
+        }
+      }
+    }
+  },
+  "deploy": {
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 100,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  },
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": {
+      "description": "Supabase project URL",
+      "required": true
+    },
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
+      "description": "Supabase anonymous key",
+      "required": true
+    },
+    "OPENAI_API_KEY": {
+      "description": "OpenAI API key for AI features",
+      "required": false
+    },
+    "RESEND_API_KEY": {
+      "description": "Resend API key for email",
+      "required": false
+    },
+    "RESEND_WEBHOOK_SECRET": {
+      "description": "Resend webhook secret",
+      "required": false
+    },
+    "TICKET_TOKEN_SECRET": {
+      "description": "Secret for ticket tokens",
+      "required": true
+    },
+    "CRON_SECRET": {
+      "description": "Secret for cron job authentication",
+      "required": false
+    },
+    "NEXT_PUBLIC_APP_URL": {
+      "description": "Application URL",
+      "required": false
+    }
+  }
+}

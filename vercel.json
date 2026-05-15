@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
   "crons": [
     {
       "path": "/api/cron/sla",
@@ -30,5 +33,15 @@
     }
   ],
   "regions": ["iad1"],
-  "runtime": "nodejs22.x"
+  "runtime": "nodejs22.x",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@queuedesk-supabase-url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@queuedesk-supabase-anon-key",
+    "OPENAI_API_KEY": "@queuedesk-openai-api-key",
+    "RESEND_API_KEY": "@queuedesk-resend-api-key",
+    "RESEND_WEBHOOK_SECRET": "@queuedesk-resend-webhook-secret",
+    "TICKET_TOKEN_SECRET": "@queuedesk-ticket-token-secret",
+    "CRON_SECRET": "@queuedesk-cron-secret",
+    "NEXT_PUBLIC_APP_URL": "@queuedesk-app-url"
+  }
 }

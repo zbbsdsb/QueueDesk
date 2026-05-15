@@ -2,6 +2,7 @@
 
 import { Search, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { Icon } from "@/components/ui/icon";
 
 interface SearchResult {
   id: string;
@@ -61,7 +62,7 @@ export default function GlobalSearch({ className = "" }: GlobalSearchProps) {
         onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 50); }}
         className={`flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 transition-all ${className}`}
       >
-        <Search className="w-4 h-4" />
+        <Icon icon={Search} size="sm" />
         <span className="hidden sm:inline">Search tickets, users…</span>
         <kbd className="hidden sm:inline-flex items-center gap-0.5 text-xs bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-1.5 py-0.5 font-mono ml-2">
           ⌘K
@@ -80,7 +81,7 @@ export default function GlobalSearch({ className = "" }: GlobalSearchProps) {
             className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden"
           >
             <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800">
-              <Search className="w-5 h-5 text-slate-400 shrink-0" />
+              <Icon icon={Search} size="md" className="text-slate-400 shrink-0" />
               <input
                 ref={inputRef}
                 type="text"
@@ -91,7 +92,7 @@ export default function GlobalSearch({ className = "" }: GlobalSearchProps) {
               />
               {query && (
                 <button onClick={() => setQuery("")} className="text-slate-400 hover:text-slate-600">
-                  <X className="w-4 h-4" />
+                  <Icon icon={X} size="sm" />
                 </button>
               )}
               <button
