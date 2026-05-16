@@ -45,11 +45,16 @@ export type Database = {
         Row: {
           id: string
           tenant_id: string
+          auth_subject: string | null
           email: string
           display_name: string | null
           avatar_url: string | null
-          role: "owner" | "admin" | "agent" | "requester"
-          status: "active" | "invited" | "disabled"
+          type: "human" | "bot" | "service_account"
+          status: "invited" | "active" | "suspended" | "deleted"
+          locale: string
+          time_zone: string
+          attributes: Json
+          meta: Json
           created_at: string
           updated_at: string
           deleted_at: string | null
@@ -57,11 +62,16 @@ export type Database = {
         Insert: {
           id?: string
           tenant_id: string
+          auth_subject?: string | null
           email: string
           display_name?: string | null
           avatar_url?: string | null
-          role?: "owner" | "admin" | "agent" | "requester"
-          status?: "active" | "invited" | "disabled"
+          type?: "human" | "bot" | "service_account"
+          status?: "invited" | "active" | "suspended" | "deleted"
+          locale?: string
+          time_zone?: string
+          attributes?: Json
+          meta?: Json
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
@@ -69,11 +79,16 @@ export type Database = {
         Update: {
           id?: string
           tenant_id?: string
+          auth_subject?: string | null
           email?: string
           display_name?: string | null
           avatar_url?: string | null
-          role?: "owner" | "admin" | "agent" | "requester"
-          status?: "active" | "invited" | "disabled"
+          type?: "human" | "bot" | "service_account"
+          status?: "invited" | "active" | "suspended" | "deleted"
+          locale?: string
+          time_zone?: string
+          attributes?: Json
+          meta?: Json
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
@@ -212,23 +227,29 @@ export type Database = {
         Row: {
           tenant_id: string
           id: string
+          ticket_no: number
           queue_id: string
-          requester_id: string
-          assigned_agent_id: string | null
+          requester_user_id: string
+          reporter_user_id: string | null
+          assignee_user_id: string | null
+          current_approval_id: string | null
           status:
             | "open"
-            | "in_progress"
-            | "pending_approval"
-            | "pending_customer"
+            | "pending"
+            | "waiting_approval"
+            | "waiting_customer"
             | "resolved"
             | "closed"
-            | "cancelled"
-          priority: "low" | "normal" | "high" | "urgent"
+          priority: "low" | "medium" | "high" | "urgent"
+          source: "email" | "portal" | "chat" | "api" | "system"
           subject: string
           description: string | null
           lock_version: number
-          sla_deadline: string | null
-          breach_notified_at: string | null
+          next_sla_breach_at: string | null
+          submitted_at: string
+          first_responded_at: string | null
+          resolved_at: string | null
+          closed_at: string | null
           created_at: string
           updated_at: string
           deleted_at: string | null
@@ -236,23 +257,29 @@ export type Database = {
         Insert: {
           tenant_id: string
           id?: string
+          ticket_no?: never
           queue_id: string
-          requester_id: string
-          assigned_agent_id?: string | null
+          requester_user_id?: string
+          reporter_user_id?: string | null
+          assignee_user_id?: string | null
+          current_approval_id?: string | null
           status?:
             | "open"
-            | "in_progress"
-            | "pending_approval"
-            | "pending_customer"
+            | "pending"
+            | "waiting_approval"
+            | "waiting_customer"
             | "resolved"
             | "closed"
-            | "cancelled"
-          priority?: "low" | "normal" | "high" | "urgent"
+          priority?: "low" | "medium" | "high" | "urgent"
+          source?: "email" | "portal" | "chat" | "api" | "system"
           subject: string
           description?: string | null
           lock_version?: number
-          sla_deadline?: string | null
-          breach_notified_at?: string | null
+          next_sla_breach_at?: string | null
+          submitted_at?: string
+          first_responded_at?: string | null
+          resolved_at?: string | null
+          closed_at?: string | null
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
@@ -260,23 +287,29 @@ export type Database = {
         Update: {
           tenant_id?: string
           id?: string
+          ticket_no?: never
           queue_id?: string
-          requester_id?: string
-          assigned_agent_id?: string | null
+          requester_user_id?: string
+          reporter_user_id?: string | null
+          assignee_user_id?: string | null
+          current_approval_id?: string | null
           status?:
             | "open"
-            | "in_progress"
-            | "pending_approval"
-            | "pending_customer"
+            | "pending"
+            | "waiting_approval"
+            | "waiting_customer"
             | "resolved"
             | "closed"
-            | "cancelled"
-          priority?: "low" | "normal" | "high" | "urgent"
+          priority?: "low" | "medium" | "high" | "urgent"
+          source?: "email" | "portal" | "chat" | "api" | "system"
           subject?: string
           description?: string | null
           lock_version?: number
-          sla_deadline?: string | null
-          breach_notified_at?: string | null
+          next_sla_breach_at?: string | null
+          submitted_at?: string
+          first_responded_at?: string | null
+          resolved_at?: string | null
+          closed_at?: string | null
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
@@ -319,12 +352,12 @@ export type Database = {
           id: string
           tenant_id: string
           ticket_id: string
-          author_id: string
-          author_type: "user" | "contact" | "system"
-          visibility: "public" | "internal"
+          author_user_id: string | null
+          parent_comment_id: string | null
+          visibility: "public" | "internal" | "approver_only"
           body: string
-          status: "published" | "edited" | "redacted"
-          mentions: string[]
+          is_redacted: boolean
+          meta: Json
           created_at: string
           updated_at: string
           deleted_at: string | null
@@ -333,12 +366,12 @@ export type Database = {
           id?: string
           tenant_id: string
           ticket_id: string
-          author_id: string
-          author_type?: "user" | "contact" | "system"
-          visibility: "public" | "internal"
+          author_user_id?: string | null
+          parent_comment_id?: string | null
+          visibility?: "public" | "internal" | "approver_only"
           body: string
-          status?: "published" | "edited" | "redacted"
-          mentions?: string[]
+          is_redacted?: boolean
+          meta?: Json
           created_at?: string
           updated_at?: string
           deleted_at?: string | null
@@ -347,12 +380,12 @@ export type Database = {
           id?: string
           tenant_id?: string
           ticket_id?: string
-          author_id?: string
-          author_type?: "user" | "contact" | "system"
-          visibility?: "public" | "internal"
+          author_user_id?: string | null
+          parent_comment_id?: string | null
+          visibility?: "public" | "internal" | "approver_only"
           body?: string
-          status?: "published" | "edited" | "redacted"
-          mentions?: string[]
+          is_redacted?: boolean
+          meta?: Json
           created_at?: string
           updated_at?: string
           deleted_at?: string | null

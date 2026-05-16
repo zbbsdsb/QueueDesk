@@ -21,6 +21,8 @@
   </div>
 </div>
 
+![Social Preview](social-preview.png)
+
 ---
 
 **QueueDesk** routes, prioritises, and resolves support tickets automatically — powered by AI, built for 20–500 person companies.
