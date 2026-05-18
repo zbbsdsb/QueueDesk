@@ -15,18 +15,15 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { notifySLAWarning } from "@/lib/email/sender";
 import { secondsToMinutes } from "@/lib/utils";
+import type { Ticket, Queue, SlaPolicy, AppUser } from "@/lib/types";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
 export const dynamic = "force-dynamic";
 
-// Database uses seconds for SLA targets
-interface SLAPolicyFromDB {
-  id: string;
-  name: string;
-  first_response_seconds: number | null;
-  resolution_seconds: number | null;
-  status: string;
+interface TicketWithRelations extends Ticket {
+  queue: Queue | null;
+  assignee_user: AppUser | null;
 }
 
 export async function GET(req: NextRequest) {
@@ -60,7 +57,6 @@ export async function GET(req: NextRequest) {
     let errors = 0;
 
     // Find all open tickets that need SLA checking
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: tickets, error: ticketError } = await supabase
       .from("ticket")
       .select(`
@@ -69,36 +65,35 @@ export async function GET(req: NextRequest) {
         subject,
         status,
         priority,
-        assigned_agent_id,
-        sla_policy_id,
+        assignee_user_id,
         queue_id,
         created_at,
-        sla_first_response_at,
-        sla_resolution_at,
-        sla_breach_notified_at,
+        next_sla_breach_at,
+        submitted_at,
+        first_responded_at,
+        resolved_at,
         queue:queue_id (
           id,
           name,
-          slug,
-          sla_policy_id
+          default_sla_policy_id
         ),
-        assigned_agent:assigned_agent_id (
+        assignee_user:assignee_user_id (
           id,
           display_name,
           email
         )
       `)
-      .in("status", ["open", "in_progress", "pending"])
-      .is("sla_breach_notified_at", null);
+      .in("status", ["open", "pending", "waiting_approval", "waiting_customer"])
+      .is("deleted_at", null);
 
-    // Also fetch SLA policies separately - database uses seconds
+    // Also fetch SLA policies separately
     const { data: slaPolicies } = await supabase
       .from("sla_policy")
-      .select("id, name, first_response_seconds, resolution_seconds")
-      .eq("status", "active");
+      .select("*")
+      .is("deleted_at", null);
 
     const slaMap = new Map(
-      (slaPolicies as unknown as SLAPolicyFromDB[] ?? []).map((p) => [p.id, p])
+      (slaPolicies as SlaPolicy[] ?? []).map((p) => [p.id, p])
     );
 
     if (ticketError) {
@@ -110,93 +105,94 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "No tickets to check", alertsSent: 0 });
     }
 
-    for (const ticket of tickets) {
+    const ticketsWithRelations = tickets as Array<Record<string, unknown>>;
+
+    for (const ticket of ticketsWithRelations) {
       try {
-        type QueueRelation = { id: string; name: string; slug: string; sla_policy_id: string | null } | null;
-        type AgentRelation = { id: string; display_name: string | null; email: string } | null;
-        const queue = ticket.queue as QueueRelation;
-        const agent = ticket.assigned_agent as AgentRelation;
-        const sla = slaMap.get(queue?.sla_policy_id ?? null);
+        const queue = ticket.queue as Queue | null;
+        const agent = ticket.assignee_user as AppUser | null;
+        const ticketData = ticket as unknown as Ticket;
+        const sla = queue?.default_sla_policy_id ? slaMap.get(queue.default_sla_policy_id) : null;
         
         if (!sla) continue; // No SLA policy attached to this queue
 
-        const createdAt = new Date(ticket.created_at);
+        const createdAt = new Date(ticketData.submitted_at || ticketData.created_at);
         const minutesElapsed = Math.floor((now.getTime() - createdAt.getTime()) / 60000);
 
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-        const ticketUrl = `${baseUrl}/agent/tickets/${ticket.id}`;
-
-        // Convert seconds to minutes for comparison
-        const firstRespMinutes = secondsToMinutes(sla.first_response_seconds);
-        const resolutionMinutes = secondsToMinutes(sla.resolution_seconds);
+        const ticketUrl = `${baseUrl}/agent/tickets/${ticketData.id}`;
 
         // First response check
         if (
-          firstRespMinutes > 0 &&
-          minutesElapsed > firstRespMinutes &&
-          !ticket.sla_first_response_at &&
-          !ticket.sla_breach_notified_at
+          sla.first_response_seconds &&
+          !ticketData.first_responded_at &&
+          !ticketData.next_sla_breach_at
         ) {
-          const minutesOverdue = minutesElapsed - firstRespMinutes;
+          const firstRespMinutes = secondsToMinutes(sla.first_response_seconds);
+          if (minutesElapsed > firstRespMinutes) {
+            const minutesOverdue = minutesElapsed - firstRespMinutes;
 
-          if (agent) {
-            await notifySLAWarning({
-              ticketNo: ticket.ticket_no,
-              ticketSubject: ticket.subject,
-              agentName: agent.display_name ?? "Agent",
-              agentEmail: agent.email,
-              slaPolicyName: sla.name,
-              breachType: "first_response",
-              minutesOverdue,
-              ticketUrl,
-            });
+            if (agent && agent.email) {
+              await notifySLAWarning({
+                ticketNo: ticketData.ticket_no ?? 0,
+                ticketSubject: ticketData.subject,
+                agentName: agent.display_name ?? "Agent",
+                agentEmail: agent.email,
+                slaPolicyName: sla.name,
+                breachType: "first_response",
+                minutesOverdue,
+                ticketUrl,
+              });
+            }
+
+            // Mark as notified
+            await supabase
+              .from("ticket")
+              .update({ next_sla_breach_at: now.toISOString() })
+              .eq("id", ticketData.id);
+
+            alertsSent++;
           }
-
-          // Mark as notified
-          await supabase
-            .from("ticket")
-            .update({ sla_breach_notified_at: now.toISOString() })
-            .eq("id", ticket.id);
-
-          alertsSent++;
         }
 
         // Resolution check
         if (
-          resolutionMinutes > 0 &&
-          minutesElapsed > resolutionMinutes &&
-          !ticket.sla_resolution_at &&
-          !ticket.sla_breach_notified_at
+          sla.resolution_seconds &&
+          !ticketData.resolved_at &&
+          !ticketData.next_sla_breach_at
         ) {
-          const minutesOverdue = minutesElapsed - resolutionMinutes;
+          const resolutionMinutes = secondsToMinutes(sla.resolution_seconds);
+          if (minutesElapsed > resolutionMinutes) {
+            const minutesOverdue = minutesElapsed - resolutionMinutes;
 
-          if (agent) {
-            await notifySLAWarning({
-              ticketNo: ticket.ticket_no,
-              ticketSubject: ticket.subject,
-              agentName: agent.display_name ?? "Agent",
-              agentEmail: agent.email,
-              slaPolicyName: sla.name,
-              breachType: "resolution",
-              minutesOverdue,
-              ticketUrl,
-            });
+            if (agent && agent.email) {
+              await notifySLAWarning({
+                ticketNo: ticketData.ticket_no ?? 0,
+                ticketSubject: ticketData.subject,
+                agentName: agent.display_name ?? "Agent",
+                agentEmail: agent.email,
+                slaPolicyName: sla.name,
+                breachType: "resolution",
+                minutesOverdue,
+                ticketUrl,
+              });
+            }
+
+            await supabase
+              .from("ticket")
+              .update({ next_sla_breach_at: now.toISOString() })
+              .eq("id", ticketData.id);
+
+            alertsSent++;
           }
-
-          await supabase
-            .from("ticket")
-            .update({ sla_breach_notified_at: now.toISOString() })
-            .eq("id", ticket.id);
-
-          alertsSent++;
         }
       } catch (e) {
-        console.error(`[SLA Cron] Error processing ticket ${ticket.ticket_no}:`, e);
+        console.error(`[SLA Cron] Error processing ticket:`, e);
         errors++;
       }
     }
 
-    console.log(`[SLA Cron] Done — alerts sent: ${alertsSent}, errors: ${errors}`);
+    console.log(`[SLA Cron] Done — alerts sent: ${alertsSent}, errors: ${errors}");
     return NextResponse.json({ ok: true, alertsSent, errors });
   } catch (err) {
     console.error("[SLA Cron] Unexpected error:", err);

@@ -31,13 +31,15 @@ type Ticket = {
   status: TicketStatus;
   priority: TicketPriority;
   queue_id: string;
-  assigned_agent_id: string | null;
-  requester_id: string;
+  assignee_user_id: string | null;
+  requester_user_id: string;
   created_at: string;
   updated_at: string;
   queue?: { name: string };
   requester?: { display_name: string | null; email: string };
-  assigned_agent?: { display_name: string | null; email: string } | null;
+  assignee_user_id?: string;
+  requester?: { display_name: string | null; email: string };
+  assignee?: { display_name: string | null; email: string } | null;
 };
 
 type Filters = {
@@ -106,9 +108,9 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
         </span>
       </td>
       <td className="px-4 py-3.5">
-        {ticket.assigned_agent ? (
+        {ticket.assignee ? (
           <span className="text-sm text-slate-600 dark:text-slate-400">
-            {ticket.assigned_agent.display_name ?? ticket.assigned_agent.email.split("@")[0]}
+            {ticket.assignee.display_name ?? ticket.assignee.email.split("@")[0]}
           </span>
         ) : (
           <span className="text-sm text-slate-400 dark:text-slate-600 italic">Unassigned</span>
@@ -162,14 +164,14 @@ export default function ApprovalsPage() {
     let query = supabase
       .from("ticket")
       .select(`
-        id, ticket_no, subject, status, priority, queue_id, assigned_agent_id, requester_id,
+        id, ticket_no, subject, status, priority, queue_id, assignee_user_id, requester_user_id,
         created_at, updated_at,
         queue:queue_id(name),
-        requester:requester_id(display_name, email),
-        assigned_agent:assigned_agent_id(display_name, email)
+        requester:requester_user_id(display_name, email),
+        assignee:assignee_user_id(display_name, email)
       `)
       .eq("tenant_id", user.tenant_id)
-      .eq("status", "pending_approval")
+      .eq("status", "waiting_approval")
       .is("deleted_at", null);
 
     if (filters.search.trim()) {

@@ -38,11 +38,11 @@ function getStatusEmoji(status: string): string {
   switch (status.toLowerCase()) {
     case "open":
       return "📨";
-    case "in_progress":
+    case "pending":
       return "🔧";
-    case "pending_approval":
+    case "waiting_approval":
       return "⏳";
-    case "pending_customer":
+    case "waiting_customer":
       return "🕐";
     case "resolved":
       return "✅";

@@ -71,29 +71,28 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
         .from("ticket")
         .select(
           `
-          id, tenant_id, queue_id, requester_id, assigned_agent_id,
+          id, tenant_id, queue_id, requester_user_id, assignee_user_id,
           status, priority, subject, description, sla_deadline, created_at, updated_at,
           queue:queue_id(name, slug),
-          assigned_agent:assigned_agent_id(display_name, email),
-          requester:requester_id(display_name, email)
+          assignee:assignee_user_id(display_name, email),
+          requester:requester_user_id(display_name, email)
         `
         )
         .eq("id", params.id)
         .eq("tenant_id", user.tenant_id)
-        .eq("requester_id", user.id)
+        .eq("requester_user_id", user.id)
         .single(),
       supabase
         .from("ticket_comment")
         .select(
           `
-          id, ticket_id, author_id, author_type, visibility, body, status,
-          mentions, created_at, updated_at,
-          author:author_id(display_name, email)
+          id, ticket_id, author_user_id, visibility, body,
+          created_at, updated_at,
+          author:author_user_id(display_name, email)
         `
         )
         .eq("ticket_id", params.id)
         .eq("visibility", "public")
-        .eq("status", "published")
         .order("created_at", { ascending: true }),
     ]);
 
@@ -122,17 +121,15 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
       .insert({
         tenant_id: user.tenant_id,
         ticket_id: params.id,
-        author_id: user.id,
-        author_type: "user",
+        author_user_id: user.id,
         visibility: "public",
         body: replyText.trim(),
-        status: "published",
       })
       .select(
         `
-        id, ticket_id, author_id, author_type, visibility, body, status,
-        mentions, created_at, updated_at,
-        author:author_id(display_name, email)
+        id, ticket_id, author_user_id, visibility, body,
+        created_at, updated_at,
+        author:author_user_id(display_name, email)
       `
       )
       .single();
@@ -244,7 +241,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
 
           {/* Comments */}
           <div className="px-6 py-4 space-y-4">
-            {comments.filter((c) => c.author_type !== "user" || c.author_id !== ticket.requester_id).length > 0 && (
+            {comments.filter((c) => c.author_user_id !== ticket.requester_user_id).length > 0 && (
               <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-2">
                 <MessageSquare className="w-3 h-3" />
                 {comments.length} {comments.length === 1 ? "reply" : "replies"}
@@ -252,7 +249,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
             )}
 
             {comments.map((comment) => {
-              const isSelf = comment.author_id === user?.id;
+              const isSelf = comment.author_user_id === user?.id;
               return (
                 <div key={comment.id} className={`flex items-start gap-3 ${isSelf ? "flex-row-reverse" : ""}`}>
                   <Avatar name={comment.author?.display_name ?? comment.author?.email ?? "?"} size="sm" />
@@ -336,11 +333,11 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
               <MetaRow icon={<Clock className="w-3.5 h-3.5" />} label="Created" value={formatDate(ticket.created_at)} />
               <MetaRow icon={<Clock className="w-3.5 h-3.5" />} label="Updated" value={formatDate(ticket.updated_at)} />
               {ticket.queue && <MetaRow icon={<Ticket className="w-3.5 h-3.5" />} label="Category" value={ticket.queue.name} />}
-              {ticket.assigned_agent ? (
+              {ticket.assignee ? (
                 <MetaRow
                   icon={<User className="w-3.5 h-3.5" />}
                   label="Assigned to"
-                  value={ticket.assigned_agent.display_name ?? ticket.assigned_agent.email}
+                  value={ticket.assignee.display_name ?? ticket.assignee.email}
                 />
               ) : (
                 <MetaRow icon={<User className="w-3.5 h-3.5" />} label="Assigned to" value="Unassigned" />

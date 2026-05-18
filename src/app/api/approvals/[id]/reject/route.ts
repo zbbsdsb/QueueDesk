@@ -57,19 +57,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
 
-    if (ticket.status !== "pending_approval") {
+    if (ticket.status !== "waiting_approval") {
       return NextResponse.json(
         { error: "Ticket is not pending approval" },
         { status: 400 }
       );
     }
 
-    // Update the ticket status to in_progress (or should it go back to open? Wait let's check VALID_TRANSITIONS in lib/types.ts)
-    // VALID_TRANSITIONS says pending_approval can go to in_progress or cancelled
+    // Update the ticket status to pending
     const { error: updateError } = await supabase
       .from("ticket")
       .update({
-        status: "in_progress",
+        status: "pending",
         updated_at: new Date().toISOString(),
         lock_version: ticket.lock_version + 1,
       })
@@ -81,9 +80,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     const { data: requesterData } = await supabase
-      .from("contact")
-      .select("display_name, primary_email")
-      .eq("id", ticket.requester_id)
+      .from("app_user")
+      .select("display_name, email")
+      .eq("id", ticket.requester_user_id)
       .single();
 
     const { data: queueData } = await supabase
@@ -99,15 +98,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       ticketNo: ticket.ticket_no,
       subject: ticket.subject,
       priority: ticket.priority,
-      status: "in_progress",
-      requesterName: requesterData?.display_name ?? ticket.requester_id,
-      requesterEmail: requesterData?.primary_email ?? "",
+      status: "pending",
+      requesterName: requesterData?.display_name ?? ticket.requester_user_id,
+      requesterEmail: requesterData?.email ?? "",
       queueName: queueData?.name ?? "General",
       approverName: appUser.display_name ?? appUser.email,
       approverDecision: "rejected",
     });
 
-    return NextResponse.json({ success: true, ticket: { ...ticket, status: "in_progress" } });
+    return NextResponse.json({ success: true, ticket: { ...ticket, status: "pending" } });
   } catch (err) {
     console.error("[Reject API] Unexpected error:", err);
     return NextResponse.json(

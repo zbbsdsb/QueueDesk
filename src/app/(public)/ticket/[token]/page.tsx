@@ -31,9 +31,9 @@ export default async function PublicTicketPage({
     .from("ticket")
     .select(`
       id, ticket_no, subject, description, status, priority, queue_id,
-      requester_id, lock_version, sla_deadline, created_at, updated_at,
+      requester_user_id, lock_version, sla_deadline, created_at, updated_at,
       queue:queue_id(id, name, slug),
-      requester:requester_id(id, display_name, email)
+      requester:requester_user_id(id, display_name, email)
     `)
     .eq("id", ticketId)
     .single();
@@ -55,8 +55,8 @@ export default async function PublicTicketPage({
   const { data: comments } = await supabase
     .from("ticket_comment")
     .select(`
-      id, body, visibility, author_type, created_at, status,
-      author:author_id(id, display_name, email)
+      id, body, visibility, created_at,
+      author:author_user_id(id, display_name, email)
     `)
     .eq("ticket_id", ticketId)
     .eq("visibility", "public")

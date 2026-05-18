@@ -80,10 +80,12 @@ function baseTemplate(content: string, footer?: string): { html: string; text: s
 function statusColor(status: string): string {
   const map: Record<string, string> = {
     open: "#2563eb",
-    "in_progress": "#7c3aed",
-    pending: "#d97706",
+    pending: "#7c3aed",
+    waiting_approval: "#d97706",
+    waiting_customer: "#f59e0b",
     resolved: "#16a34a",
     closed: "#6b7280",
+    cancelled: "#9ca3af",
   };
   return map[status] ?? "#6b7280";
 }
@@ -91,10 +93,12 @@ function statusColor(status: string): string {
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
     open: "Open",
-    in_progress: "In Progress",
     pending: "Pending",
+    waiting_approval: "Pending Approval",
+    waiting_customer: "Awaiting Customer",
     resolved: "Resolved",
     closed: "Closed",
+    cancelled: "Cancelled",
   };
   return map[status] ?? status;
 }

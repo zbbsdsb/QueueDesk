@@ -99,7 +99,7 @@ export default function AgentNewTicketPage() {
       .insert({
         tenant_id: user!.tenant_id,
         queue_id: queueId,
-        requester_id: requesterId,
+        requester_user_id: requesterId,
         priority: priority as "low" | "normal" | "high" | "urgent",
         subject: subject.trim(),
         description: description.trim() || null,

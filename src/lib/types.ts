@@ -1,120 +1,217 @@
-import type { Database } from "./supabase/types";
+import type { Database } from '@/lib/supabase/types'
 
-export type TicketStatus = Database["public"]["Tables"]["ticket"]["Row"]["status"];
-export type TicketPriority = Database["public"]["Tables"]["ticket"]["Row"]["priority"];
-export type TenantStatus = Database["public"]["Tables"]["tenant"]["Row"]["status"];
-export type AppUserStatus = Database["public"]["Tables"]["app_user"]["Row"]["status"];
-export type AppUserRole = Database["public"]["Tables"]["app_user"]["Row"]["role"];
+// Direct Supabase types
+export type Tenant = Database['public']['Tables']['tenant']['Row']
+export type TenantInsert = Database['public']['Tables']['tenant']['Insert']
+export type TenantUpdate = Database['public']['Tables']['tenant']['Update']
 
-// View models (what we actually use in the UI)
-export type TicketWithRelations = {
-  id: string;
-  tenant_id: string;
-  queue_id: string;
-  requester_id: string;
-  assigned_agent_id: string | null;
-  ticket_no: number;
-  status: TicketStatus;
-  priority: TicketPriority;
-  subject: string;
-  description: string | null;
-  lock_version: number;
-  sla_deadline: string | null;
-  breach_notified_at: string | null;
-  created_at: string;
-  updated_at: string;
-  // Joined relations
-  queue?: { id: string; name: string; slug: string };
-  requester?: { id: string; display_name: string | null; email: string };
-  assigned_agent?: { id: string; display_name: string | null; email: string } | null;
-  labels?: { id: string; name: string; color: string; slug: string }[];
-};
+export type AppUser = Database['public']['Tables']['app_user']['Row']
+export type AppUserInsert = Database['public']['Tables']['app_user']['Insert']
+export type AppUserUpdate = Database['public']['Tables']['app_user']['Update']
 
-export type TicketCommentWithAuthor = {
-  id: string;
-  ticket_id: string;
-  author_id: string;
-  author_type: "user" | "contact" | "system";
-  visibility: "public" | "internal";
-  body: string;
-  status: "published" | "edited" | "redacted";
-  mentions: string[];
-  created_at: string;
-  updated_at: string;
-  author?: { id: string; display_name: string | null; email: string };
-};
+export type Team = Database['public']['Tables']['team']['Row']
+export type TeamInsert = Database['public']['Tables']['team']['Insert']
+export type TeamUpdate = Database['public']['Tables']['team']['Update']
 
-// Status display config
-export const TICKET_STATUS_CONFIG: Record<
-  TicketStatus,
-  { label: string; color: string; bg: string; text: string }
-> = {
-  open: { label: "Open", color: "blue", bg: "bg-blue-50 dark:bg-blue-950", text: "text-blue-700 dark:text-blue-300" },
-  in_progress: { label: "In Progress", color: "violet", bg: "bg-violet-50 dark:bg-violet-950", text: "text-violet-700 dark:text-violet-300" },
-  pending_approval: { label: "Pending Approval", color: "amber", bg: "bg-amber-50 dark:bg-amber-950", text: "text-amber-700 dark:text-amber-300" },
-  pending_customer: { label: "Awaiting Customer", color: "orange", bg: "bg-orange-50 dark:bg-orange-950", text: "text-orange-700 dark:text-orange-300" },
-  resolved: { label: "Resolved", color: "green", bg: "bg-green-50 dark:bg-green-950", text: "text-green-700 dark:text-green-300" },
-  closed: { label: "Closed", color: "slate", bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400" },
-  cancelled: { label: "Cancelled", color: "red", bg: "bg-red-50 dark:bg-red-950", text: "text-red-700 dark:text-red-300" },
-};
+export type TeamMember = Database['public']['Tables']['team_member']['Row']
+export type TeamMemberInsert = Database['public']['Tables']['team_member']['Insert']
+export type TeamMemberUpdate = Database['public']['Tables']['team_member']['Update']
 
-export const TICKET_PRIORITY_CONFIG: Record<
-  TicketPriority,
-  { label: string; color: string; bg: string; text: string; dot: string }
-> = {
-  low: { label: "Low", color: "slate", bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400", dot: "bg-slate-400" },
-  normal: { label: "Normal", color: "blue", bg: "bg-blue-100 dark:bg-blue-900", text: "text-blue-700 dark:text-blue-300", dot: "bg-blue-500" },
-  high: { label: "High", color: "amber", bg: "bg-amber-100 dark:bg-amber-900", text: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
-  urgent: { label: "Urgent", color: "red", bg: "bg-red-100 dark:bg-red-900", text: "text-red-700 dark:text-red-300", dot: "bg-red-500" },
-};
+export type Queue = Database['public']['Tables']['queue']['Row']
+export type QueueInsert = Database['public']['Tables']['queue']['Insert']
+export type QueueUpdate = Database['public']['Tables']['queue']['Update']
 
-// Status transition rules
-export const VALID_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
-  open: ["in_progress", "pending_approval", "cancelled"],
-  in_progress: ["pending_approval", "pending_customer", "resolved", "cancelled"],
-  pending_customer: ["in_progress", "cancelled"],
-  pending_approval: ["in_progress", "cancelled"],
-  resolved: ["in_progress", "closed"],
-  closed: [],
-  cancelled: [],
-};
+export type QueueMember = Database['public']['Tables']['queue_member']['Row']
+export type QueueMemberInsert = Database['public']['Tables']['queue_member']['Insert']
+export type QueueMemberUpdate = Database['public']['Tables']['queue_member']['Update']
 
-// ── AppUser role color config ─────────────────────────────
-export const APP_USER_ROLE_CONFIG: Record<
-  string,
-  { label: string; bg: string; text: string }
-> = {
-  owner: { label: "Owner", bg: "bg-violet-100 dark:bg-violet-900", text: "text-violet-700 dark:text-violet-300" },
-  admin: { label: "Admin", bg: "bg-blue-100 dark:bg-blue-900", text: "text-blue-700 dark:text-blue-300" },
-  agent: { label: "Agent", bg: "bg-cyan-100 dark:bg-cyan-900", text: "text-cyan-700 dark:text-cyan-300" },
-  requester: { label: "Requester", bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400" },
-};
+export type Ticket = Database['public']['Tables']['ticket']['Row']
+export type TicketInsert = Database['public']['Tables']['ticket']['Insert']
+export type TicketUpdate = Database['public']['Tables']['ticket']['Update']
 
-// ── AppUser status color config ──────────────────────────
-export const APP_USER_STATUS_CONFIG: Record<
-  string,
-  { label: string; bg: string; text: string }
-> = {
-  active: { label: "Active", bg: "bg-emerald-100 dark:bg-emerald-900", text: "text-emerald-700 dark:text-emerald-300" },
-  disabled: { label: "Disabled", bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-500 dark:text-slate-400" },
-  invited: { label: "Invited", bg: "bg-amber-100 dark:bg-amber-900", text: "text-amber-700 dark:text-amber-300" },
-};
+export type TicketComment = Database['public']['Tables']['ticket_comment']['Row']
+export type TicketCommentInsert = Database['public']['Tables']['ticket_comment']['Insert']
+export type TicketCommentUpdate = Database['public']['Tables']['ticket_comment']['Update']
 
-// ── Queue display colors (for pie/bar charts) ──────────────
-export const QUEUE_COLORS = [
-  "#3b82f6", // blue
-  "#8b5cf6", // violet
-  "#f59e0b", // amber
-  "#10b981", // emerald
-  "#ef4444", // red
-  "#06b6d4", // cyan
-  "#ec4899", // pink
-  "#84cc16", // lime
-] as const;
+export type TicketStatusTransition = Database['public']['Tables']['ticket_status_transition']['Row']
+export type TicketStatusTransitionInsert = Database['public']['Tables']['ticket_status_transition']['Insert']
+export type TicketStatusTransitionUpdate = Database['public']['Tables']['ticket_status_transition']['Update']
 
-// ── SLA status colors ─────────────────────────────────────
-export const SLA_STATUS_COLORS: Record<string, { dot: string; bg: string }> = {
-  on_track: { dot: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
-  at_risk: { dot: "bg-amber-500", bg: "bg-amber-50 dark:bg-amber-950/40" },
-  breached: { dot: "bg-red-500", bg: "bg-red-50 dark:bg-red-950/40" },
-};
+export type Label = Database['public']['Tables']['label']['Row']
+export type LabelInsert = Database['public']['Tables']['label']['Insert']
+export type LabelUpdate = Database['public']['Tables']['label']['Update']
+
+export type TicketLabel = Database['public']['Tables']['ticket_label']['Row']
+export type TicketLabelInsert = Database['public']['Tables']['ticket_label']['Insert']
+export type TicketLabelUpdate = Database['public']['Tables']['ticket_label']['Update']
+
+export type SlaPolicy = Database['public']['Tables']['sla_policy']['Row']
+export type SlaPolicyInsert = Database['public']['Tables']['sla_policy']['Insert']
+export type SlaPolicyUpdate = Database['public']['Tables']['sla_policy']['Update']
+
+export type BusinessCalendar = Database['public']['Tables']['business_calendar']['Row']
+export type BusinessCalendarInsert = Database['public']['Tables']['business_calendar']['Insert']
+export type BusinessCalendarUpdate = Database['public']['Tables']['business_calendar']['Update']
+
+export type BusinessCalendarRule = Database['public']['Tables']['business_calendar_rule']['Row']
+export type BusinessCalendarRuleInsert = Database['public']['Tables']['business_calendar_rule']['Insert']
+export type BusinessCalendarRuleUpdate = Database['public']['Tables']['business_calendar_rule']['Update']
+
+export type BusinessCalendarHoliday = Database['public']['Tables']['business_calendar_holiday']['Row']
+export type BusinessCalendarHolidayInsert = Database['public']['Tables']['business_calendar_holiday']['Insert']
+export type BusinessCalendarHolidayUpdate = Database['public']['Tables']['business_calendar_holiday']['Update']
+
+export type BusinessCalendarException = Database['public']['Tables']['business_calendar_exception']['Row']
+export type BusinessCalendarExceptionInsert = Database['public']['Tables']['business_calendar_exception']['Insert']
+export type BusinessCalendarExceptionUpdate = Database['public']['Tables']['business_calendar_exception']['Update']
+
+export type TicketSlaClock = Database['public']['Tables']['ticket_sla_clock']['Row']
+export type TicketSlaClockInsert = Database['public']['Tables']['ticket_sla_clock']['Insert']
+export type TicketSlaClockUpdate = Database['public']['Tables']['ticket_sla_clock']['Update']
+
+export type TicketSlaPauseSegment = Database['public']['Tables']['ticket_sla_pause_segment']['Row']
+export type TicketSlaPauseSegmentInsert = Database['public']['Tables']['ticket_sla_pause_segment']['Insert']
+export type TicketSlaPauseSegmentUpdate = Database['public']['Tables']['ticket_sla_pause_segment']['Update']
+
+export type ApprovalWorkflow = Database['public']['Tables']['approval_workflow']['Row']
+export type ApprovalWorkflowInsert = Database['public']['Tables']['approval_workflow']['Insert']
+export type ApprovalWorkflowUpdate = Database['public']['Tables']['approval_workflow']['Update']
+
+export type ApprovalStep = Database['public']['Tables']['approval_step']['Row']
+export type ApprovalStepInsert = Database['public']['Tables']['approval_step']['Insert']
+export type ApprovalStepUpdate = Database['public']['Tables']['approval_step']['Update']
+
+export type TicketApproval = Database['public']['Tables']['ticket_approval']['Row']
+export type TicketApprovalInsert = Database['public']['Tables']['ticket_approval']['Insert']
+export type TicketApprovalUpdate = Database['public']['Tables']['ticket_approval']['Update']
+
+export type TicketApprovalStep = Database['public']['Tables']['ticket_approval_step']['Row']
+export type TicketApprovalStepInsert = Database['public']['Tables']['ticket_approval_step']['Insert']
+export type TicketApprovalStepUpdate = Database['public']['Tables']['ticket_approval_step']['Update']
+
+export type KnowledgeArticle = Database['public']['Tables']['knowledge_article']['Row']
+export type KnowledgeArticleInsert = Database['public']['Tables']['knowledge_article']['Insert']
+export type KnowledgeArticleUpdate = Database['public']['Tables']['knowledge_article']['Update']
+
+export type Attachment = Database['public']['Tables']['attachment']['Row']
+export type AttachmentInsert = Database['public']['Tables']['attachment']['Insert']
+export type AttachmentUpdate = Database['public']['Tables']['attachment']['Update']
+
+export type FieldPermission = Database['public']['Tables']['field_permission']['Row']
+export type FieldPermissionInsert = Database['public']['Tables']['field_permission']['Insert']
+export type FieldPermissionUpdate = Database['public']['Tables']['field_permission']['Update']
+
+export type AiAction = Database['public']['Tables']['ai_action']['Row']
+export type AiActionInsert = Database['public']['Tables']['ai_action']['Insert']
+export type AiActionUpdate = Database['public']['Tables']['ai_action']['Update']
+
+export type Contact = Database['public']['Tables']['contact']['Row']
+export type ContactInsert = Database['public']['Tables']['contact']['Insert']
+export type ContactUpdate = Database['public']['Tables']['contact']['Update']
+
+export type Invite = Database['public']['Tables']['invite']['Row']
+export type InviteInsert = Database['public']['Tables']['invite']['Insert']
+export type InviteUpdate = Database['public']['Tables']['invite']['Update']
+
+export type TenantRole = Database['public']['Tables']['tenant_role']['Row']
+export type TenantRoleInsert = Database['public']['Tables']['tenant_role']['Insert']
+export type TenantRoleUpdate = Database['public']['Tables']['tenant_role']['Update']
+
+export type UserRoleAssignment = Database['public']['Tables']['user_role_assignment']['Row']
+export type UserRoleAssignmentInsert = Database['public']['Tables']['user_role_assignment']['Insert']
+export type UserRoleAssignmentUpdate = Database['public']['Tables']['user_role_assignment']['Update']
+
+// Enum types
+export type TicketStatus = Ticket['status']
+export type TicketPriority = Ticket['priority']
+export type TicketSource = Ticket['source']
+export type UserType = AppUser['type']
+export type UserStatus = AppUser['status']
+export type TeamStatus = Team['status']
+export type QueueStatus = Queue['status']
+export type QueueVisibility = Queue['visibility']
+export type QueueDefaultPriority = Queue['default_priority']
+export type QueueRoutingMode = Queue['routing_mode']
+export type CommentVisibility = TicketComment['visibility']
+export type KnowledgeArticleStatus = KnowledgeArticle['status']
+export type SlaMetric = TicketSlaClock['metric']
+export type SlaState = TicketSlaClock['state']
+export type ApprovalStatus = TicketApproval['status']
+export type ApprovalStepStatus = TicketApprovalStep['status']
+export type ApproverType = ApprovalStep['approver_type']
+export type AiActionType = AiAction['action_type']
+export type AiActionStatus = AiAction['status']
+export type FieldPermissionEffect = FieldPermission['effect']
+export type FieldPermissionMaskType = FieldPermission['mask_type']
+export type FieldPermissionPrincipalType = FieldPermission['principal_type']
+export type TeamMemberRole = TeamMember['membership_role']
+export type QueueMemberRole = QueueMember['membership_role']
+export type TenantStatus = Tenant['status']
+
+// Utility types
+export type Json = Database['public']['Tables']['tenant']['Row']['settings']
+
+// Extended types with relations
+export type TicketWithRelations = Ticket & {
+  queue?: Queue
+  requester?: AppUser
+  reporter?: AppUser
+  assignee?: AppUser
+  comments?: TicketComment[]
+  labels?: (TicketLabel & { label?: Label })[]
+  slaPolicy?: SlaPolicy
+  currentApproval?: TicketApproval
+  slaClocks?: TicketSlaClock[]
+}
+
+export type SlaPolicyWithCalendar = SlaPolicy & {
+  businessCalendar?: BusinessCalendar
+}
+
+export type QueueWithRelations = Queue & {
+  ownerTeam?: Team
+  defaultSlaPolicy?: SlaPolicy
+  defaultApprovalWorkflow?: ApprovalWorkflow
+  members?: (QueueMember & { user?: AppUser })[]
+}
+
+export type TeamWithMembers = Team & {
+  manager?: AppUser
+  lead?: AppUser
+  members?: (TeamMember & { user?: AppUser })[]
+}
+
+export type ApprovalWorkflowWithSteps = ApprovalWorkflow & {
+  steps?: ApprovalStep[]
+}
+
+// Pagination types
+export interface PaginatedResult<T> {
+  data: T[]
+  count: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+// Sort types
+export interface SortOption {
+  field: string
+  direction: 'asc' | 'desc'
+}
+
+// Filter types
+export interface FilterOption {
+  field: string
+  operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'in' | 'is'
+  value: string | number | boolean | string[] | number[] | null
+}
+
+// API response types
+export interface ApiResponse<T> {
+  data?: T
+  error?: string
+  message?: string
+}
+
+export interface PaginatedApiResponse<T> extends ApiResponse<PaginatedResult<T>> {}

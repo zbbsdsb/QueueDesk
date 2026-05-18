@@ -26,7 +26,7 @@ export async function POST(req: NextRequest, { params }: { params: { ticketId: s
     // Get comments for the ticket
     const { data: comments } = await supabase
       .from("ticket_comment")
-      .select(`id, body, author:author_id(id, display_name, email)`)
+      .select(`id, body, author:author_user_id(id, display_name, email)`)
       .eq("ticket_id", ticket.id)
       .order("created_at", { ascending: true });
 

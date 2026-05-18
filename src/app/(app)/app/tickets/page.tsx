@@ -26,8 +26,9 @@ import { timeAgo } from "@/lib/utils";
 const FILTER_TABS: { label: string; value: TicketStatus | "all" }[] = [
   { label: "All", value: "all" },
   { label: "Open", value: "open" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Pending", value: "pending_customer" },
+  { label: "In Progress", value: "pending" },
+  { label: "Pending Customer", value: "waiting_customer" },
+  { label: "Pending Approval", value: "waiting_approval" },
   { label: "Resolved", value: "resolved" },
   { label: "Closed", value: "closed" },
 ];
@@ -53,14 +54,14 @@ export default function MyTicketsPage() {
       .from("ticket")
       .select(
         `
-        id, tenant_id, queue_id, requester_id, assigned_agent_id,
+        id, tenant_id, queue_id, requester_user_id, assignee_user_id,
         status, priority, subject, description, created_at, updated_at,
         queue:queue_id(name, slug),
-        assigned_agent:assigned_agent_id(display_name, email)
+        assignee:assignee_user_id(display_name, email)
       `
       )
       .eq("tenant_id", user.tenant_id)
-      .eq("requester_id", user.id)
+      .eq("requester_user_id", user.id)
       .order("updated_at", { ascending: false });
 
     const { data, error } = await query;
@@ -255,10 +256,10 @@ export default function MyTicketsPage() {
                           <Clock className="w-3 h-3" />
                           {timeAgo(ticket.updated_at)}
                         </span>
-                        {ticket.assigned_agent && (
+                        {ticket.assignee && (
                           <span className="flex items-center gap-1">
                             <User className="w-3 h-3" />
-                            {ticket.assigned_agent.display_name ?? ticket.assigned_agent.email}
+                            {ticket.assignee.display_name ?? ticket.assignee.email}
                           </span>
                         )}
                       </div>

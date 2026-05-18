@@ -11,8 +11,10 @@ import {
   TICKET_PRIORITY_CONFIG,
   VALID_TRANSITIONS,
   SLA_STATUS_COLORS,
-  type TicketStatus,
-  type TicketPriority,
+  type Ticket,
+  type TicketComment,
+  type AppUser,
+  type Queue,
 } from "@/lib/types";
 import {
   ArrowLeft,
@@ -31,40 +33,14 @@ import {
 } from "lucide-react";
 import { getAge } from "@/lib/utils";
 
-type TicketDetail = {
-  id: string;
-  ticket_no: number;
-  subject: string;
-  description: string | null;
-  status: TicketStatus;
-  priority: TicketPriority;
-  queue_id: string;
-  assigned_agent_id: string | null;
-  requester_id: string;
-  lock_version: number;
-  sla_deadline: string | null;
-  created_at: string;
-  updated_at: string;
-  queue?: { id: string; name: string; slug: string };
-  requester?: { id: string; display_name: string | null; email: string };
-  assigned_agent?: { id: string; display_name: string | null; email: string } | null;
+type TicketWithRelations = Ticket & {
+  queue?: Pick<Queue, "id" | "name" | "slug">;
+  requester?: Pick<AppUser, "id" | "display_name" | "email">;
+  assignee_user?: Pick<AppUser, "id" | "display_name" | "email"> | null;
 };
 
-type Comment = {
-  id: string;
-  body: string;
-  visibility: "public" | "internal";
-  author_type: "user" | "contact" | "system";
-  created_at: string;
-  status: "published" | "edited" | "redacted";
-  author?: { id: string; display_name: string | null; email: string };
-};
-
-
-type Agent = {
-  id: string;
-  display_name: string | null;
-  email: string;
+type CommentWithAuthor = TicketComment & {
+  author?: Pick<AppUser, "id" | "display_name" | "email">;
 };
 
 export default function TicketDetail({ ticketId }: { ticketId: string }) {
@@ -78,8 +54,8 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
   const statusMenuRef = useRef<HTMLDivElement>(null);
   const reassignMenuRef = useRef<HTMLDivElement>(null);
 
-  const [ticket, setTicket] = useState<TicketDetail | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [ticket, setTicket] = useState<TicketWithRelations | null>(null);
+  const [comments, setComments] = useState<CommentWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [commentVisibility, setCommentVisibility] = useState<"public" | "internal">("public");
@@ -94,7 +70,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
   const [showAiCard, setShowAiCard] = useState(false);
 
   // Reassign related state
-  const [agents, setAgents] = useState<Agent[]>([]);
+  const [agents, setAgents] = useState<Pick<AppUser, "id" | "display_name" | "email">[]>([]);
   const [showReassignMenu, setShowReassignMenu] = useState(false);
   const [reassigning, setReassigning] = useState(false);
   const [agentSearch, setAgentSearch] = useState("");
@@ -103,11 +79,11 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
     const { data, error } = await supabase
       .from("ticket")
       .select(`
-        id, ticket_no, subject, description, status, priority, queue_id, assigned_agent_id,
-        requester_id, lock_version, sla_deadline, created_at, updated_at,
+        id, ticket_no, subject, description, status, priority, queue_id, assignee_user_id,
+        requester_user_id, lock_version, next_sla_breach_at, sla_deadline, created_at, updated_at,
         queue:queue_id(id, name, slug),
-        requester:requester_id(id, display_name, email),
-        assigned_agent:assigned_agent_id(id, display_name, email)
+        requester:requester_user_id(id, display_name, email),
+        assignee_user:assignee_user_id(id, display_name, email)
       `)
       .eq("id", ticketId)
       .single();
@@ -117,7 +93,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
       router.push("/agent/tickets");
       return;
     }
-    setTicket(data as TicketDetail);
+    setTicket(data as unknown as TicketWithRelations);
     fetchComments();
   }
 
@@ -126,12 +102,12 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
       .from("ticket_comment")
       .select(`
         id, body, visibility, author_type, created_at, status,
-        author:author_id(id, display_name, email)
+        author:author_user_id(id, display_name, email)
       `)
       .eq("ticket_id", ticketId)
       .order("created_at", { ascending: true });
 
-    setComments((data as Comment[]) ?? []);
+    setComments((data as unknown as CommentWithAuthor[]) ?? []);
     setLoading(false);
   }
 
@@ -142,7 +118,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
       .in("role", ["owner", "admin", "agent"])
       .eq("status", "active");
 
-    setAgents((data as Agent[]) ?? []);
+    setAgents((data as Pick<AppUser, "id" | "display_name" | "email">[]) ?? []);
   }
 
   async function handleReassign(newAgentId: string | null) {
@@ -153,7 +129,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
       const res = await fetch(`/api/tickets/${ticket.id}/reassign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ new_assigned_agent_id: newAgentId }),
+        body: JSON.stringify({ new_assignee_user_id: newAgentId }),
       });
       if (!res.ok) throw new Error("Failed to reassign ticket");
       toast({ title: "Ticket reassigned" });
@@ -196,7 +172,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
     };
   }, []);
 
-  async function handleStatusChange(newStatus: TicketStatus) {
+  async function handleStatusChange(newStatus: Ticket["status"]) {
     if (!ticket || !user) return;
     setShowStatusMenu(false);
     startTransition(async () => {
@@ -225,8 +201,8 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
       const { error } = await supabase
         .from("ticket")
         .update({
-          assigned_agent_id: user.id,
-          status: ticket.status === "open" ? "in_progress" : ticket.status,
+          assignee_user_id: user.id,
+          status: ticket.status === "open" ? "pending" : ticket.status,
           updated_at: new Date().toISOString(),
           lock_version: ticket.lock_version + 1,
         })
@@ -237,7 +213,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
         toast({ variant: "destructive", title: "Failed to assign", description: error.message });
       } else {
         toast({ title: "Assigned", description: "Ticket has been assigned to you." });
-        const newStatus = ticket.status === "open" ? "in_progress" : ticket.status;
+        const newStatus = ticket.status === "open" ? "pending" : ticket.status;
         notifyTicketAssigned(supabase, {
           tenantId: user.tenant_id,
           ticketId: ticket.id,
@@ -297,7 +273,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
     const { error } = await supabase.from("ticket_comment").insert({
       tenant_id: user.tenant_id,
       ticket_id: ticket.id,
-      author_id: user.id,
+      author_user_id: user.id,
       author_type: "user",
       visibility: commentVisibility,
       body: newComment.trim(),
@@ -356,9 +332,10 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
 
   // Calculate SLA status
   let slaStatus: "on_track" | "at_risk" | "breached" | null = null;
-  if (ticket.sla_deadline) {
+  const slaDate = ticket.next_sla_breach_at ?? ticket.sla_deadline;
+  if (slaDate) {
     const now = new Date();
-    const deadline = new Date(ticket.sla_deadline);
+    const deadline = new Date(slaDate);
     const diffMs = deadline.getTime() - now.getTime();
     const diffHours = diffMs / (1000 * 60 * 60);
     if (diffMs < 0) {
@@ -370,8 +347,8 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
     }
   }
 
-  const canTake = !ticket.assigned_agent_id && ticket.status === "open";
-  const canAssignSelf = !ticket.assigned_agent_id;
+  const canTake = !ticket.assignee_user_id && ticket.status === "open";
+  const canAssignSelf = !ticket.assignee_user_id;
 
   return (
     <div className="flex flex-col lg:flex-row h-full">
@@ -405,7 +382,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
                   {aiLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                   {aiLoading ? "Thinking..." : "AI Suggest"}
                 </button>
-                {ticket.status === "pending_approval" && (
+                {ticket.status === "waiting_approval" && (
                   <>
                     <button
                       onClick={handleReject}
@@ -442,7 +419,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
 
                   {/* Status transition dropdown */}
                   {validNextStatuses.length > 0 && (
-                    <div className="relative">
+                    <div className="relative" ref={statusMenuRef}>
                       <button
                         onClick={() => setShowStatusMenu((v) => !v)}
                         className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all ${statusCfg.bg} ${statusCfg.text} border-current/20 hover:opacity-80`}
@@ -460,7 +437,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
                                 onClick={() => handleStatusChange(s)}
                                 className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${cfg.text}`}
                               >
-                                <span className={`w-2 h-2 rounded-full ${cfg.bg.replace("bg-", "bg-").split(" ")[0]}`} />
+                                <span className={`w-2 h-2 rounded-full ${cfg.bg.split(" ")[0]}`} />
                                 {cfg.label}
                               </button>
                             );
@@ -477,7 +454,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${priorityCfg.bg} ${priorityCfg.text}`}>
                   {priorityCfg.label}
                 </span>
-                {slaStatus && ticket.sla_deadline && (
+                {slaStatus && slaDate && (
                   <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${SLA_STATUS_COLORS[slaStatus].bg}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${SLA_STATUS_COLORS[slaStatus].dot}`} />
                     {slaStatus === "breached"
@@ -640,15 +617,15 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
           {/* Assigned Agent */}
           <div>
             <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Assigned Agent</h4>
-            {ticket.assigned_agent ? (
+            {ticket.assignee_user ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center text-xs font-bold text-white">
-                    {(ticket.assigned_agent.display_name ?? ticket.assigned_agent.email)[0].toUpperCase()}
+                    {(ticket.assignee_user.display_name ?? ticket.assignee_user.email)[0].toUpperCase()}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                      {ticket.assigned_agent.display_name ?? ticket.assigned_agent.email.split("@")[0]}
+                      {ticket.assignee_user.display_name ?? ticket.assignee_user.email.split("@")[0]}
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-500">Agent</p>
                   </div>
@@ -682,7 +659,7 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
                         {agents
                           .filter(
                             (agent) =>
-                              agent.id !== ticket.assigned_agent_id &&
+                              agent.id !== ticket.assignee_user_id &&
                               (agent.display_name?.toLowerCase().includes(agentSearch.toLowerCase()) ||
                                 agent.email.toLowerCase().includes(agentSearch.toLowerCase()))
                           )
@@ -773,11 +750,11 @@ export default function TicketDetail({ ticketId }: { ticketId: string }) {
             <div className="space-y-2.5">
               <TimelineEvent icon={Clock} label="Created" value={new Date(ticket.created_at).toLocaleString()} />
               <TimelineEvent icon={RefreshCw} label="Updated" value={new Date(ticket.updated_at).toLocaleString()} />
-              {ticket.sla_deadline && (
+              {slaDate && (
                 <TimelineEvent
                   icon={AlertCircle}
                   label="SLA Deadline"
-                  value={new Date(ticket.sla_deadline).toLocaleString()}
+                  value={new Date(slaDate).toLocaleString()}
                   iconClassName={
                     slaStatus
                       ? SLA_STATUS_COLORS[slaStatus].dot.replace("bg-", "text-")

@@ -9,8 +9,9 @@ import {
   TICKET_STATUS_CONFIG,
   TICKET_PRIORITY_CONFIG,
   SLA_STATUS_COLORS,
-  type TicketStatus,
-  type TicketPriority,
+  type Ticket,
+  type AppUser,
+  type Queue,
 } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -25,39 +26,28 @@ import {
 } from "lucide-react";
 import { getAge } from "@/lib/utils";
 
-type Ticket = {
-  id: string;
-  ticket_no: number;
-  subject: string;
-  status: TicketStatus;
-  priority: TicketPriority;
-  queue_id: string;
-  assigned_agent_id: string | null;
-  requester_id: string;
-  created_at: string;
-  updated_at: string;
-  sla_deadline: string | null;
-  queue?: { name: string };
-  requester?: { display_name: string | null; email: string };
-  assigned_agent?: { display_name: string | null; email: string } | null;
+type TicketWithRelations = Ticket & {
+  queue?: Pick<Queue, "name">;
+  requester?: Pick<AppUser, "display_name" | "email">;
+  assignee_user?: Pick<AppUser, "display_name" | "email"> | null;
 };
 
 type Filters = {
-  status: TicketStatus | "all";
-  priority: TicketPriority | "all";
+  status: Ticket["status"] | "all";
+  priority: Ticket["priority"] | "all";
   search: string;
   sortBy: "created_at" | "updated_at" | "priority";
   sortOrder: "asc" | "desc";
 };
 
-const PRIORITY_ORDER: Record<TicketPriority, number> = {
+const PRIORITY_ORDER: Record<Ticket["priority"], number> = {
   urgent: 0,
   high: 1,
   normal: 2,
   low: 3,
 };
 
-function TicketRow({ ticket }: { ticket: Ticket }) {
+function TicketRow({ ticket }: { ticket: TicketWithRelations }) {
   const statusCfg = TICKET_STATUS_CONFIG[ticket.status];
   const priorityCfg = TICKET_PRIORITY_CONFIG[ticket.priority];
 
@@ -66,7 +56,19 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
 
   // Calculate SLA status
   let slaStatus: "on_track" | "at_risk" | "breached" | null = null;
-  if (ticket.sla_deadline) {
+  if (ticket.next_sla_breach_at) {
+    const now = new Date();
+    const deadline = new Date(ticket.next_sla_breach_at);
+    const diffMs = deadline.getTime() - now.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    if (diffMs < 0) {
+      slaStatus = "breached";
+    } else if (diffHours < 24) {
+      slaStatus = "at_risk";
+    } else {
+      slaStatus = "on_track";
+    }
+  } else if (ticket.sla_deadline) {
     const now = new Date();
     const deadline = new Date(ticket.sla_deadline);
     const diffMs = deadline.getTime() - now.getTime();
@@ -126,7 +128,7 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
         </span>
       </td>
       <td className="px-4 py-3.5">
-        {slaStatus && ticket.sla_deadline && (
+        {slaStatus && (ticket.next_sla_breach_at || ticket.sla_deadline) && (
           <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${SLA_STATUS_COLORS[slaStatus].bg}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${SLA_STATUS_COLORS[slaStatus].dot}`} />
             {slaStatus === "breached"
@@ -138,9 +140,9 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
         )}
       </td>
       <td className="px-4 py-3.5">
-        {ticket.assigned_agent ? (
+        {ticket.assignee_user ? (
           <span className="text-sm text-slate-600 dark:text-slate-400">
-            {ticket.assigned_agent.display_name ?? ticket.assigned_agent.email.split("@")[0]}
+            {ticket.assignee_user.display_name ?? ticket.assignee_user.email.split("@")[0]}
           </span>
         ) : (
           <span className="text-sm text-slate-400 dark:text-slate-600 italic">Unassigned</span>
@@ -167,7 +169,6 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
   );
 }
 
-
 export default function TicketsTable() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -175,7 +176,7 @@ export default function TicketsTable() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<TicketWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
@@ -196,11 +197,11 @@ export default function TicketsTable() {
     let query = supabase
       .from("ticket")
       .select(`
-        id, ticket_no, subject, status, priority, queue_id, assigned_agent_id, requester_id,
-        created_at, updated_at, sla_deadline,
+        id, ticket_no, subject, status, priority, queue_id, assignee_user_id, requester_user_id,
+        created_at, updated_at, next_sla_breach_at, sla_deadline,
         queue:queue_id(name),
-        requester:requester_id(display_name, email),
-        assigned_agent:assigned_agent_id(display_name, email)
+        requester:requester_user_id(display_name, email),
+        assignee_user:assignee_user_id(display_name, email)
       `)
       .eq("tenant_id", user.tenant_id)
       .is("deleted_at", null);
@@ -222,7 +223,7 @@ export default function TicketsTable() {
     if (error) {
       toast({ variant: "destructive", title: "Failed to load tickets", description: error.message });
     } else {
-      let result = (data ?? []) as Ticket[];
+      let result = (data ?? []) as unknown as TicketWithRelations[];
 
       if (filters.priority !== "all") {
         // Already filtered via query
@@ -265,12 +266,12 @@ export default function TicketsTable() {
     .filter(([s]) => !["resolved", "closed", "cancelled"].includes(s))
     .reduce((sum, [, c]) => sum + c, 0);
 
-  const STATUS_TABS: { key: TicketStatus | "all"; label: string; count?: number }[] = [
+  const STATUS_TABS: { key: Ticket["status"] | "all"; label: string; count?: number }[] = [
     { key: "all", label: "All" },
     { key: "open", label: "Open", count: statusCounts["open"] },
-    { key: "in_progress", label: "In Progress", count: statusCounts["in_progress"] },
-    { key: "pending_approval", label: "Pending Approval", count: statusCounts["pending_approval"] },
-    { key: "pending_customer", label: "Awaiting Customer", count: statusCounts["pending_customer"] },
+    { key: "pending", label: "Pending", count: statusCounts["pending"] },
+    { key: "waiting_approval", label: "Pending Approval", count: statusCounts["waiting_approval"] },
+    { key: "waiting_customer", label: "Awaiting Customer", count: statusCounts["waiting_customer"] },
   ];
 
   return (
@@ -353,7 +354,7 @@ export default function TicketsTable() {
               <button
                 key={p}
                 onClick={() => {
-                  setFilters((f) => ({ ...f, priority: p }));
+                  setFilters((f) => ({ ...f, priority: p });
                   setTimeout(() => fetchTickets(), 0);
                 }}
                 className={`px-2.5 py-1 text-xs rounded-lg transition-all ${

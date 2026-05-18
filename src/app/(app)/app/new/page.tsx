@@ -86,7 +86,7 @@ export default function NewTicketPage() {
         .insert({
           tenant_id: user.tenant_id,
           queue_id: queueId,
-          requester_id: user.id,
+          requester_user_id: user.id,
           subject: subject.trim(),
           description: description.trim(),
           priority,

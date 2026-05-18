@@ -153,77 +153,70 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    // Step 1: Find or create contact by email
-    let contactId: string | null = null;
+    // Step 1: Find or create app user by email (simplified for demo purposes)
+    let userId: string | null = null;
 
-    const { data: existingContact } = await supabase
-      .from("contact")
-      .select("id")
-      .eq("primary_email", fromEmail)
+    const { data: existingUser } = await supabase
+      .from("app_user")
+      .select("id, tenant_id")
+      .eq("email", fromEmail)
       .maybeSingle();
 
-    if (existingContact) {
-      contactId = existingContact.id;
+    if (existingUser) {
+      userId = existingUser.id;
     } else {
-      // Auto-create contact from email
-      const { data: newContact, error: contactError } = await supabase
-        .from("contact")
-        .insert({
-          primary_email: fromEmail,
-          full_name: fromEmail.split("@")[0],
-          contact_type: "employee",
-          status: "active",
-        })
-        .select("id")
-        .single();
-
-      if (contactError) {
-        console.error("[Email Intake] Failed to create contact:", contactError);
-        return NextResponse.json({ error: "Failed to create contact" }, { status: 500 });
-      }
-      contactId = newContact.id;
+      // For demo purposes, we'll just skip creating a user and require manual assignment
+      console.warn("[Email Intake] No user found for email:", fromEmail);
     }
 
     // Step 2: Determine queue
     // If tenant routing hint is provided, look up the queue by slug pattern "email-{queue}"
     let queueId: string | null = null;
+    let tenantId: string | null = null;
+    
     if (tenantRoutingHint) {
       const { data: queueData } = await supabase
         .from("queue")
         .select("id, tenant_id")
         .eq("slug", tenantRoutingHint)
-        .eq("status", "active")
         .maybeSingle();
 
       if (queueData) {
         queueId = queueData.id;
+        tenantId = queueData.tenant_id;
       }
     }
 
-    // Fallback: get the first available queue for this tenant
-    if (!queueId && contactId) {
-      // We need tenant_id from the contact's tenant context
-      const { data: contactWithTenant } = await supabase
-        .from("contact")
-        .select("tenant_id")
-        .eq("id", contactId)
-        .single();
+    // Fallback: if we found a user, get the first queue for their tenant
+    if (!queueId && userId && existingUser) {
+      tenantId = existingUser.tenant_id;
+      const { data: fallbackQueue } = await supabase
+        .from("queue")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
 
-      if (contactWithTenant?.tenant_id) {
-        const { data: fallbackQueue } = await supabase
-          .from("queue")
-          .select("id")
-          .eq("tenant_id", contactWithTenant.tenant_id)
-          .eq("status", "active")
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-
-        queueId = fallbackQueue?.id ?? null;
-      }
+      queueId = fallbackQueue?.id ?? null;
     }
 
+    // If no queue found, try to find any tenant with queues
     if (!queueId) {
+      const { data: anyQueue } = await supabase
+        .from("queue")
+        .select("id, tenant_id")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      
+      if (anyQueue) {
+        queueId = anyQueue.id;
+        tenantId = anyQueue.tenant_id;
+      }
+    }
+
+    if (!queueId || !tenantId) {
       // No queue available — store for later processing
       console.warn("[Email Intake] No queue found for email from", fromEmail);
       return NextResponse.json({
@@ -233,24 +226,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Step 3: Get tenant_id from queue
-    const { data: queueWithTenant } = await supabase
-      .from("queue")
-      .select("tenant_id")
-      .eq("id", queueId)
-      .single();
-
-    if (!queueWithTenant?.tenant_id) {
-      return NextResponse.json({ error: "Queue not found" }, { status: 404 });
-    }
-
     // Step 4: Create ticket
     const { data: ticket, error: ticketError } = await supabase
       .from("ticket")
       .insert({
-        tenant_id: queueWithTenant.tenant_id,
+        tenant_id: tenantId,
         queue_id: queueId,
-        requester_id: contactId,
+        requester_user_id: userId,
         subject: subject.slice(0, 200),
         description: body.trim(),
         priority: "normal",
@@ -267,11 +249,11 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Email Intake] Created ticket ${ticket.ticket_no} from ${fromEmail}`);
 
-    const { data: contactData } = await supabase
-      .from("contact")
-      .select("display_name, primary_email")
-      .eq("id", contactId)
-      .single();
+    const { data: userData } = userId ? await supabase
+      .from("app_user")
+      .select("display_name, email")
+      .eq("id", userId)
+      .single() : { data: null };
 
     const { data: queueData } = await supabase
       .from("queue")
@@ -281,13 +263,13 @@ export async function POST(req: NextRequest) {
 
     const clientSupabase = createClient();
     notifyNewTicket(clientSupabase, {
-      tenantId: queueWithTenant.tenant_id,
+      tenantId: tenantId,
       ticketId: ticket.id,
       ticketNo: ticket.ticket_no,
       subject: subject.slice(0, 200),
       priority: "normal",
       status: "open",
-      requesterName: contactData?.display_name ?? fromEmail.split("@")[0],
+      requesterName: userData?.display_name ?? fromEmail.split("@")[0],
       requesterEmail: fromEmail,
       queueName: queueData?.name ?? "General",
     });

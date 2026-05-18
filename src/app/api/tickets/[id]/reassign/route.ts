@@ -21,7 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     );
 
     const ticketId = params.id;
-    const { new_assigned_agent_id } = await req.json();
+    const { new_assignee_user_id } = await req.json();
 
     // Get current authenticated user
     const {
@@ -60,12 +60,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       );
     }
 
-    // If new_assigned_agent_id is provided, validate it's a valid user in same tenant
-    if (new_assigned_agent_id) {
+    // If new_assignee_user_id is provided, validate it's a valid user in same tenant
+    if (new_assignee_user_id) {
       const { data: newAgent, error: agentError } = await supabase
         .from("app_user")
         .select("id, tenant_id")
-        .eq("id", new_assigned_agent_id)
+        .eq("id", new_assignee_user_id)
         .single();
 
       if (agentError || !newAgent) {
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const { error: updateError } = await supabase
       .from("ticket")
       .update({
-        assigned_agent_id: new_assigned_agent_id || null,
+        assignee_user_id: new_assignee_user_id || null,
         updated_at: new Date().toISOString(),
         lock_version: ticket.lock_version + 1,
       })
@@ -106,9 +106,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       action: "ticket.reassign",
       entity_type: "ticket",
       entity_id: ticketId,
-      changed_fields: ["assigned_agent_id"],
-      before_data: { assigned_agent_id: ticket.assigned_agent_id },
-      after_data: { assigned_agent_id: new_assigned_agent_id || null },
+      changed_fields: ["assignee_user_id"],
+      before_data: { assignee_user_id: ticket.assignee_user_id },
+      after_data: { assignee_user_id: new_assignee_user_id || null },
       occurred_at: new Date().toISOString(),
     });
 

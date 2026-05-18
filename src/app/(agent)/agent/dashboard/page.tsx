@@ -69,15 +69,15 @@ export default async function AgentDashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("tenant_id", tenantId)
       .is("deleted_at", null)
-      .not("status", "in", '("resolved","closed","cancelled")'),
+      .not("status", "in", '("resolved","closed")'),
 
     supabase
       .from("ticket")
       .select("*", { count: "exact", head: true })
       .eq("tenant_id", tenantId)
-      .eq("assigned_agent_id", appUser.id)
+      .eq("assignee_user_id", appUser.id)
       .is("deleted_at", null)
-      .not("status", "in", '("resolved","closed","cancelled")'),
+      .not("status", "in", '("resolved","closed")'),
 
     supabase
       .from("ticket")
@@ -129,7 +129,7 @@ export default async function AgentDashboardPage() {
     .select("queue:queue_id(name)")
     .eq("tenant_id", tenantId)
     .is("deleted_at", null)
-    .not("status", "in", '("resolved","closed","cancelled")');
+    .not("status", "in", '("resolved","closed")');
 
   const qCount: Record<string, number> = {};
   (queueTickets ?? []).forEach((t: { queue: { name: string } | null }) => {
@@ -148,7 +148,7 @@ export default async function AgentDashboardPage() {
     .select(`
       id, subject, status, priority, created_at,
       queue:queue_id(name),
-      requester:requester_id(display_name, email)
+      requester:requester_user_id(display_name, email)
     `)
     .eq("tenant_id", tenantId)
     .is("deleted_at", null)
@@ -169,7 +169,7 @@ export default async function AgentDashboardPage() {
     .from("ticket")
     .select("*", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .eq("status", "in_progress")
+    .eq("status", "pending")
     .is("deleted_at", null);
 
   const fourHoursAgo = new Date(Date.now() - 4 * 3600000).toISOString();
@@ -179,7 +179,7 @@ export default async function AgentDashboardPage() {
     .from("ticket")
     .select("*", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .in("status", ["open", "in_progress"])
+    .in("status", ["open", "pending"])
     .lt("updated_at", oneDayAgo)
     .is("deleted_at", null);
 
@@ -187,7 +187,7 @@ export default async function AgentDashboardPage() {
     .from("ticket")
     .select("*", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .in("status", ["open", "in_progress"])
+    .in("status", ["open", "pending"])
     .lt("updated_at", fourHoursAgo)
     .gte("updated_at", oneDayAgo)
     .is("deleted_at", null);

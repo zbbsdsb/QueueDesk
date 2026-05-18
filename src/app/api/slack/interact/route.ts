@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       { cookies: { getAll() { return cookieStore.getAll() }, setAll() {} } }
     );
 
-    const newStatus = decision === "approve" ? "in_progress" : "in_progress";
+    const newStatus = decision === "approve" ? "pending" : "pending";
     const { error } = await supabase
       .from("ticket")
       .update({ status: newStatus, updated_at: new Date().toISOString() })
