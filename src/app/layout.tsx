@@ -1,23 +1,38 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProviderWrapper } from "@/components/providers/AuthProviderWrapper";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
   title: "QueueDesk",
   description: "AI-first internal service desk for modern teams",
+  icons: {
+    icon: [
+      {
+        url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text y='.9em' font-size='80' x='15'>⚡</text></svg>",
+        type: "image/svg+xml",
+      },
+    ],
+  },
 };
 
 type AppUser = Database["public"]["Tables"]["app_user"]["Row"];
@@ -27,7 +42,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 服务端获取当前登录用户，注入 AuthProvider
   let initialUser: AppUser | null = null;
   try {
     const supabase = await createServerClient();
@@ -43,15 +57,15 @@ export default async function RootLayout({
       initialUser = data;
     }
   } catch {
-    // 未登录或服务端查询失败，initialUser 为 null
+    // silent
   }
 
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${outfit.variable} ${plusJakarta.variable} ${geistMono.variable}`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-screen antialiased bg-background text-foreground font-sans">
         <AuthProviderWrapper initialUser={initialUser}>
           {children}
         </AuthProviderWrapper>

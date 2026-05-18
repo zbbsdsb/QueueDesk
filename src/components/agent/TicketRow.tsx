@@ -30,33 +30,64 @@ export default function TicketRow({ ticket }: TicketRowProps) {
   return (
     <Link
       href={`/agent/tickets/${ticket.id}`}
-      className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0 group"
+      className="group relative flex items-center gap-4 px-6 py-4 transition-all duration-200 hover:bg-primary/[0.02]"
     >
-      <span className="text-xs font-mono text-slate-400 dark:text-slate-500 w-16 shrink-0">
-        {ticket.id.slice(0, 8)}
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-          {ticket.subject}
-        </p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-          {ticket.requester?.display_name ?? ticket.requester?.email ?? "Unknown"}
-        </p>
+      {/* Left Accent Line */}
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-0 group-hover:h-full bg-gradient-to-b from-primary to-accent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-full" />
+      
+      {/* Ticket ID Badge */}
+      <div className="relative flex items-center justify-center w-20 h-8 rounded-lg bg-secondary/30 px-2 shrink-0">
+        <span className="text-[11px] font-mono font-semibold text-muted-foreground tracking-tight">
+          #{ticket.id.slice(0, 8)}
+        </span>
       </div>
-      <span className="text-xs text-slate-500 dark:text-slate-400 w-24 shrink-0 text-center hidden sm:block">
-        {ticket.queue?.name ?? "—"}
-      </span>
-      <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize hidden md:flex items-center gap-1 w-20 shrink-0 justify-center ${priorityCfg.bg} ${priorityCfg.text}`}>
-        {ticket.priority === "urgent" && <AlertCircle className="w-3 h-3" />}
-        {priorityCfg.label}
-      </span>
-      <span className={`text-xs font-medium px-2 py-0.5 rounded-full w-20 shrink-0 text-center ${statusCfg.bg} ${statusCfg.text}`}>
-        {statusCfg.label}
-      </span>
-      <span className="text-xs text-slate-400 dark:text-slate-500 w-16 shrink-0 text-right hidden lg:block">
-        {age}
-      </span>
-      <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0 group-hover:text-blue-500 transition-colors" />
+      
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors duration-200">
+            {ticket.subject}
+          </p>
+          {ticket.priority === "urgent" && (
+            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-error/10 text-error">
+              <AlertCircle className="w-3 h-3" />
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-xs text-muted-foreground">
+            {ticket.requester?.display_name ?? ticket.requester?.email ?? "Unknown"}
+          </span>
+          <span className="text-muted-foreground/30">·</span>
+          <span className="text-xs text-muted-foreground/70">{age} ago</span>
+        </div>
+      </div>
+      
+      {/* Queue Badge */}
+      <div className="hidden sm:flex items-center shrink-0">
+        <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-secondary/30 text-muted-foreground">
+          {ticket.queue?.name ?? "—"}
+        </span>
+      </div>
+      
+      {/* Priority Badge */}
+      <div className="hidden md:flex items-center shrink-0">
+        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium ${priorityCfg.bg} ${priorityCfg.text}`}>
+          {priorityCfg.label}
+        </span>
+      </div>
+      
+      {/* Status Badge */}
+      <div className="flex items-center shrink-0">
+        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${statusCfg.bg} ${statusCfg.text}`}>
+          {statusCfg.label}
+        </span>
+      </div>
+      
+      {/* Arrow */}
+      <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-secondary/0 group-hover:bg-primary/10 transition-all duration-200 shrink-0">
+        <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200" />
+      </div>
     </Link>
   );
 }

@@ -1,7 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
-import { Icon } from "@/components/ui/icon";
 
 export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "info" | "success" | "warning" | "error";
@@ -9,37 +8,42 @@ export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
   onDismiss?: () => void;
 }
 
+const variantStyles = {
+  info: {
+    container: "bg-cyan-500/10 border-cyan-500/20 text-cyan-700 dark:text-cyan-300",
+    icon: "text-cyan-600 dark:text-cyan-400",
+    iconBg: "bg-cyan-500/10",
+  },
+  success: {
+    container: "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300",
+    icon: "text-emerald-600 dark:text-emerald-400",
+    iconBg: "bg-emerald-500/10",
+  },
+  warning: {
+    container: "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300",
+    icon: "text-amber-600 dark:text-amber-400",
+    iconBg: "bg-amber-500/10",
+  },
+  error: {
+    container: "bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300",
+    icon: "text-rose-600 dark:text-rose-400",
+    iconBg: "bg-rose-500/10",
+  },
+};
+
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   ({ className, variant = "info", dismissible = false, onDismiss, children, ...props }, ref) => {
     const [isVisible, setIsVisible] = React.useState(true);
 
-    const getIconComponent = () => {
-      switch (variant) {
-        case "success":
-          return CheckCircle;
-        case "warning":
-          return AlertTriangle;
-        case "error":
-          return AlertCircle;
-        case "info":
-        default:
-          return Info;
-      }
+    const icons = {
+      info: Info,
+      success: CheckCircle,
+      warning: AlertTriangle,
+      error: AlertCircle,
     };
 
-    const getVariantStyles = () => {
-      switch (variant) {
-        case "success":
-          return "border-success-200 bg-success-50 text-success-900 [&>svg]:text-success-600";
-        case "warning":
-          return "border-warning-200 bg-warning-50 text-warning-900 [&>svg]:text-warning-600";
-        case "error":
-          return "border-error-200 bg-error-50 text-error-900 [&>svg]:text-error-600";
-        case "info":
-        default:
-          return "border-info-200 bg-info-50 text-info-900 [&>svg]:text-info-600";
-      }
-    };
+    const IconComponent = icons[variant];
+    const styles = variantStyles[variant];
 
     const handleDismiss = () => {
       setIsVisible(false);
@@ -54,23 +58,25 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         role="alert"
         aria-live={variant === "error" ? "assertive" : "polite"}
         className={cn(
-          "relative flex w-full items-start gap-3 overflow-hidden rounded-xl border p-4 pr-10",
-          "transition-all duration-300 ease-out",
-          getVariantStyles(),
+          "relative flex w-full items-start gap-3 overflow-hidden rounded-xl border p-4",
+          "transition-all duration-300 ease-out-expo",
+          styles.container,
           className
         )}
         {...props}
       >
-        <Icon icon={getIconComponent()} size="md" aria-hidden="true" />
-        <div className="flex-1">{children}</div>
+        <div className={cn("shrink-0 flex items-center justify-center w-10 h-10 rounded-xl", styles.iconBg)}>
+          <IconComponent className={cn("w-5 h-5", styles.icon)} aria-hidden="true" />
+        </div>
+        <div className="flex-1 min-w-0">{children}</div>
         {dismissible && (
           <button
             type="button"
             onClick={handleDismiss}
-            className="absolute right-2 top-2 rounded-md p-1.5 opacity-70 hover:opacity-100 transition-opacity duration-200 hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            aria-label="关闭提示"
+            className="shrink-0 rounded-lg p-1.5 opacity-60 hover:opacity-100 transition-opacity duration-200 hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            aria-label="Dismiss"
           >
-            <Icon icon={X} size="sm" />
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>

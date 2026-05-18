@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, ArrowRight, TicketIcon, Users, CheckCircle2, Clock } from "lucide-react";
+import { Plus, ArrowRight, TicketIcon, Users, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -14,9 +14,10 @@ import {
   PieChart,
   Pie,
   Cell,
+  Area,
+  AreaChart,
 } from "recharts";
 import {
-  QUEUE_COLORS,
   type TicketStatus,
   type TicketPriority,
 } from "@/lib/types";
@@ -80,94 +81,109 @@ export default function DashboardClient({
     {
       label: "Total Open",
       value: String(statTotalOpen),
-      change: `${statTotalOpen} open`,
+      change: `${statTotalOpen} tickets pending`,
       icon: TicketIcon,
-      bg: "bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/40 dark:to-blue-900/30",
-      iconColor: "text-blue-600 dark:text-blue-400",
+      accentColor: "blue" as const,
+      changeType: "neutral" as const,
     },
     {
       label: "My Assigned",
       value: String(statMyAssigned),
-      change: `${statMyAssigned} assigned to you`,
+      change: "Assigned to you",
       icon: Users,
-      bg: "bg-gradient-to-br from-violet-50 to-violet-100/50 dark:from-violet-950/40 dark:to-violet-900/30",
-      iconColor: "text-violet-600 dark:text-violet-400",
+      accentColor: "violet" as const,
+      changeType: "neutral" as const,
     },
     {
       label: "Resolved Today",
       value: String(statResolvedToday),
-      change: "vs yesterday",
+      change: "Completed today",
       icon: CheckCircle2,
-      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/30",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
+      accentColor: "emerald" as const,
+      changeType: "up" as const,
     },
     {
       label: "Avg First Response",
       value: statAvgFirstResponse ?? "—",
-      change: statAvgFirstResponse ? "vs last week" : "Calculating…",
+      change: statAvgFirstResponse ? "Average response" : "Calculating…",
       icon: Clock,
-      bg: "bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/30",
-      iconColor: "text-amber-600 dark:text-amber-400",
+      accentColor: "amber" as const,
+      changeType: "neutral" as const,
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
-      {/* Page header */}
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/70 dark:border-slate-800 px-6 py-6">
-        <div className="flex items-center justify-between max-w-[1400px]">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Agent Dashboard</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
-              You have{" "}
-              <span className="font-semibold text-blue-600 dark:text-blue-400">
-                {statMyAssigned} open ticket{statMyAssigned !== 1 ? "s" : ""}
-              </span>{" "}
-              assigned to you.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/agent/tickets/new"
-              className="premium-btn flex items-center gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:opacity-95 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-500/20"
-            >
-              <Plus className="w-4 h-4" />
-              New Ticket
-            </Link>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/5">
+      {/* Page Header */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTYzZWIsMSwwKSIgstb3BlcmF0b3I6Im92ZXIiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30" />
+        
+        <div className="relative px-6 py-8">
+          <div className="flex items-center justify-between max-w-[1400px] mx-auto">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                Agent Dashboard
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Welcome back! You have{" "}
+                <span className="inline-flex items-center gap-1 font-semibold text-primary">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  {statMyAssigned} open ticket{statMyAssigned !== 1 ? "s" : ""}
+                </span>{" "}
+                assigned to you.
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Link
+                href="/agent/tickets/new"
+                className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-primary to-accent text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5"
+              >
+                <Plus className="w-4 h-4 transition-transform group-hover:rotate-90 duration-300" />
+                New Ticket
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="px-6 py-6 space-y-6 max-w-[1400px]">
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="px-6 py-8 max-w-[1400px] mx-auto space-y-8">
+        {/* Stat Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 stagger">
           {statCards.map((card) => (
             <StatCard key={card.label} {...card} />
           ))}
         </div>
 
-        {/* Charts row */}
+        {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Ticket volume trend */}
-          <div className="premium-card lg:col-span-2 bg-white/70 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700 backdrop-blur-sm rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Ticket Volume
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          {/* Ticket Volume Trend */}
+          <div className="lg:col-span-2 group relative overflow-hidden bg-surface border border-border/50 rounded-2xl p-6 transition-all duration-300 hover:border-primary/20 hover:shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 to-accent/3 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            <div className="relative flex items-center justify-between mb-6">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  <h2 className="text-base font-semibold text-foreground">
+                    Ticket Volume
+                  </h2>
+                </div>
+                <p className="text-xs text-muted-foreground">
                   Incoming vs resolved — last 7 days
                 </p>
               </div>
-              <div className="flex bg-slate-100/70 dark:bg-slate-800/80 rounded-xl p-1 gap-1">
+              
+              <div className="flex bg-secondary/30 rounded-xl p-1 gap-1">
                 {(["week", "month"] as const).map((p) => (
                   <button
                     key={p}
                     onClick={() => setPeriod(p)}
-                    className={`text-xs px-4 py-2 rounded-lg capitalize transition-all font-medium ${
+                    className={`text-xs px-4 py-2 rounded-lg capitalize transition-all duration-200 font-medium ${
                       period === p
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                        ? "bg-primary text-white shadow-md"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                     }`}
                   >
                     {p}
@@ -175,96 +191,129 @@ export default function DashboardClient({
                 ))}
               </div>
             </div>
+            
             {weeklyStats.length > 0 ? (
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={weeklyStats} barGap={4}>
-                  <CartesianGrid strokeDasharray="3 3" className="dark:stroke-slate-800" stroke="#e2e8f0" vertical={false} />
-                  <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={28} />
-                  <Tooltip
-                    contentStyle={{
-                      background: "rgba(30, 41, 59, 0.95)",
-                      backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(148, 163, 184, 0.2)",
-                      borderRadius: "12px",
-                      color: "#fff",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Bar dataKey="tickets" fill="url(#blueGradient)" radius={[8, 8, 0, 0]} name="In" />
-                  <Bar dataKey="resolved" fill="url(#emeraldGradient)" radius={[8, 8, 0, 0]} name="Resolved" />
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={weeklyStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity="1" />
-                      <stop offset="100%" stopColor="#2563eb" stopOpacity="0.9" />
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity="1" />
-                      <stop offset="100%" stopColor="#059669" stopOpacity="0.9" />
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                </BarChart>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" vertical={false} />
+                  <XAxis 
+                    dataKey="day" 
+                    tick={{ fontSize: 12, fill: 'currentColor', className: 'text-muted-foreground' }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: 'currentColor', className: 'text-muted-foreground' }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                    width={28} 
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      background: 'rgba(15, 23, 42, 0.95)',
+                      backdropFilter: 'blur(12px)',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      borderRadius: '12px',
+                      color: '#fff',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <Area type="monotone" dataKey="tickets" stroke="#2563eb" strokeWidth={2} fill="url(#blueGradient)" name="Incoming" />
+                  <Area type="monotone" dataKey="resolved" stroke="#10b981" strokeWidth={2} fill="url(#emeraldGradient)" name="Resolved" />
+                </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[240px] text-sm text-slate-400">
+              <div className="flex flex-col items-center justify-center h-[260px] text-sm text-muted-foreground">
+                <div className="w-16 h-16 rounded-2xl bg-secondary/30 flex items-center justify-center mb-4">
+                  <TrendingUp className="w-8 h-8 text-muted-foreground/50" />
+                </div>
                 No data yet
               </div>
             )}
-            <div className="flex items-center gap-6 mt-4">
-              <span className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 inline-block shadow-sm" />
+            
+            <div className="flex items-center gap-6 mt-4 pt-4 border-t border-border/50">
+              <span className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                <span className="w-3 h-3 rounded-full bg-primary shadow-lg shadow-primary/30" />
                 Incoming
               </span>
-              <span className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 inline-block shadow-sm" />
+              <span className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/30" />
                 Resolved
               </span>
             </div>
           </div>
 
-          {/* Queue breakdown */}
-          <div className="premium-card bg-white/70 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700 backdrop-blur-sm rounded-2xl p-6">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-1">
-              Queue Breakdown
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">Active tickets by queue</p>
+          {/* Queue Breakdown */}
+          <div className="group relative overflow-hidden bg-surface border border-border/50 rounded-2xl p-6 transition-all duration-300 hover:border-primary/20 hover:shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/3 to-primary/3 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            <div className="relative space-y-1 mb-5">
+              <h2 className="text-base font-semibold text-foreground">
+                Queue Breakdown
+              </h2>
+              <p className="text-xs text-muted-foreground">Active tickets by queue</p>
+            </div>
+            
             {queueData.length > 0 ? (
-              <div className="flex items-center gap-5">
-                <ResponsiveContainer width={150} height={150}>
-                  <PieChart>
-                    <Pie
-                      data={queueData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={70}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {queueData.map((entry, index) => (
-                        <Cell key={index} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: "rgba(30, 41, 59, 0.95)",
-                        backdropFilter: "blur(12px)",
-                        border: "1px solid rgba(148, 163, 184, 0.2)",
-                        borderRadius: "12px",
-                        color: "#fff",
-                        fontSize: "12px",
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex-1 space-y-2.5">
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <ResponsiveContainer width={140} height={140}>
+                    <PieChart>
+                      <Pie
+                        data={queueData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={70}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {queueData.map((entry, index) => (
+                          <Cell key={index} fill={entry.color} strokeWidth={0} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          background: 'rgba(15, 23, 42, 0.95)',
+                          backdropFilter: 'blur(12px)',
+                          border: '1px solid rgba(148, 163, 184, 0.2)',
+                          borderRadius: '12px',
+                          color: '#fff',
+                          fontSize: '12px',
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  
+                  {/* Center Label */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-foreground">
+                        {queueData.reduce((s, q) => s + q.value, 0)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex-1 space-y-3">
                   {queueData.map((q) => (
                     <div key={q.name} className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                        <span className="w-2.5 h-2.5 rounded-full inline-block shadow-sm" style={{ background: q.color }} />
+                      <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ background: q.color }} />
                         {q.name}
                       </span>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      <span className="text-sm font-semibold text-foreground">
                         {q.value}
                       </span>
                     </div>
@@ -272,42 +321,61 @@ export default function DashboardClient({
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-slate-400 mt-4">No queue data yet.</p>
+              <div className="flex flex-col items-center justify-center h-[140px] text-sm text-muted-foreground">
+                <div className="w-12 h-12 rounded-xl bg-secondary/30 flex items-center justify-center mb-3">
+                  <svg className="w-6 h-6 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                  </svg>
+                </div>
+                No queue data yet
+              </div>
             )}
-            <div className="mt-5 pt-4 border-t border-slate-100/60 dark:border-slate-700/60 flex items-center justify-between">
-              <span className="text-xs text-slate-500 dark:text-slate-400">Total active</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">
+            
+            <div className="relative mt-5 pt-4 border-t border-border/50 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Total active</span>
+              <span className="text-sm font-bold text-foreground">
                 {queueData.reduce((s, q) => s + q.value, 0)}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Recent tickets */}
-        <div className="premium-card bg-white/70 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700 backdrop-blur-sm rounded-2xl overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100/60 dark:border-slate-700/60">
-            <div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+        {/* Recent Tickets */}
+        <div className="group relative overflow-hidden bg-surface border border-border/50 rounded-2xl transition-all duration-300 hover:border-primary/20 hover:shadow-lg">
+          <div className="relative flex items-center justify-between px-6 py-5 border-b border-border/50">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold text-foreground">
                 Recent Tickets
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Latest 5 tickets across all queues</p>
+              <p className="text-xs text-muted-foreground">Latest 5 tickets across all queues</p>
             </div>
             <Link
               href="/agent/tickets"
-              className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold transition-colors"
+              className="group/link inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
             >
-              View all <ArrowRight className="w-4 h-4" />
+              View all
+              <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-1" />
             </Link>
           </div>
+          
           {recentTickets.length > 0 ? (
-            recentTickets.map((ticket) => (
-              <TicketRow key={ticket.id} ticket={ticket} />
-            ))
+            <div className="divide-y divide-border/50">
+              {recentTickets.map((ticket) => (
+                <TicketRow key={ticket.id} ticket={ticket} />
+              ))}
+            </div>
           ) : (
-            <div className="px-6 py-14 text-center text-sm text-slate-400">
-              No tickets yet.{" "}
-              <Link href="/agent/tickets/new" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
+            <div className="px-6 py-14 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-secondary/30 flex items-center justify-center mx-auto mb-4">
+                <TicketIcon className="w-8 h-8 text-muted-foreground/50" />
+              </div>
+              <p className="text-sm text-muted-foreground">No tickets yet.</p>
+              <Link 
+                href="/agent/tickets/new" 
+                className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors mt-2"
+              >
                 Create one
+                <Plus className="w-4 h-4" />
               </Link>
             </div>
           )}

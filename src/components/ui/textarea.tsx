@@ -1,32 +1,23 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
-  icon?: React.ElementType;
-}
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, icon: Icon, ...props }, ref) => {
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => {
     return (
       <div className="relative">
-        {Icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60">
-            <Icon className="w-4 h-4" />
-          </div>
-        )}
-        <input
-          type={type}
+        <textarea
           className={cn(
-            "flex w-full rounded-xl border border-border/50 bg-surface",
-            "px-4 py-2.5 text-sm text-foreground",
+            "flex min-h-[120px] w-full rounded-xl border border-border/50 bg-surface",
+            "px-4 py-3 text-sm text-foreground",
             "placeholder:text-muted-foreground/60",
             "shadow-sm transition-all duration-200 ease-out-expo",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50",
             "hover:border-primary/30",
             "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-secondary/30",
-            "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
-            Icon && "pl-10",
+            "resize-none",
             className
           )}
           ref={ref}
@@ -37,6 +28,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     );
   }
 );
-Input.displayName = "Input";
+Textarea.displayName = "Textarea";
 
-export { Input };
+export { Textarea };
